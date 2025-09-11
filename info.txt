@@ -1,0 +1,162 @@
+Campos de datos
+A continuación se presenta un resumen de los campos de datos disponibles.
+
+SalePrice: El precio de venta de la propiedad en dólares. Esta es la variable objetivo que se debe predecir.
+
+MSSubClass: La clase del edificio.
+
+MSZoning: La clasificación general de la zona.
+
+LotFrontage: La longitud en pies lineales de la calle conectada a la propiedad.
+
+LotArea: El tamaño del lote en pies cuadrados.
+
+Street: El tipo de acceso a la carretera.
+
+Alley: El tipo de acceso al callejón.
+
+LotShape: La forma general de la propiedad.
+
+LandContour: La planitud de la propiedad.
+
+Utilities: El tipo de servicios públicos disponibles.
+
+LotConfig: La configuración del lote.
+
+LandSlope: La pendiente de la propiedad.
+
+Neighborhood: La ubicación física dentro de los límites de la ciudad de Ames.
+
+Condition1: La proximidad a la carretera principal o al ferrocarril.
+
+Condition2: La proximidad a la carretera principal o al ferrocarril (si hay una segunda).
+
+BldgType: El tipo de vivienda.
+
+HouseStyle: El estilo de la vivienda.
+
+OverallQual: La calidad general del material y del acabado.
+
+OverallCond: La calificación general de la condición.
+
+YearBuilt: La fecha de construcción original.
+
+YearRemodAdd: La fecha de remodelación.
+
+RoofStyle: El tipo de techo.
+
+RoofMatl: El material del techo.
+
+Exterior1st: El revestimiento exterior de la casa.
+
+Exterior2nd: El revestimiento exterior de la casa (si hay más de un material).
+
+MasVnrType: El tipo de revestimiento de mampostería.
+
+MasVnrArea: El área de revestimiento de mampostería en pies cuadrados.
+
+ExterQual: La calidad del material exterior.
+
+ExterCond: La condición actual del material en el exterior.
+
+Foundation: El tipo de cimientos.
+
+BsmtQual: La altura del sótano.
+
+BsmtCond: La condición general del sótano.
+
+BsmtExposure: Las paredes del sótano a nivel del jardín o con salida.
+
+BsmtFinType1: La calidad del área terminada del sótano.
+
+BsmtFinSF1: Los pies cuadrados terminados del tipo 1.
+
+BsmtFinType2: La calidad de la segunda área terminada (si la hay).
+
+BsmtFinSF2: Los pies cuadrados terminados del tipo 2.
+
+BsmtUnfSF: Los pies cuadrados sin terminar del área del sótano.
+
+TotalBsmtSF: El total de pies cuadrados del área del sótano.
+
+Heating: El tipo de calefacción.
+
+HeatingQC: La calidad y la condición de la calefacción.
+
+CentralAir: El aire acondicionado central.
+
+Electrical: El sistema eléctrico.
+
+1stFlrSF: Los pies cuadrados del primer piso.
+
+2ndFlrSF: Los pies cuadrados del segundo piso.
+
+LowQualFinSF: Los pies cuadrados terminados de baja calidad (en todos los pisos).
+
+GrLivArea: Los pies cuadrados del área habitable por encima del nivel del suelo.
+
+BsmtFullBath: Los baños completos en el sótano.
+
+BsmtHalfBath: Los medios baños en el sótano.
+
+FullBath: Los baños completos por encima del nivel del suelo.
+
+HalfBath: Los medios baños por encima del nivel del suelo.
+
+Bedroom: El número de dormitorios por encima del nivel del sótano.
+
+Kitchen: El número de cocinas.
+
+KitchenQual: La calidad de la cocina.
+
+TotRmsAbvGrd: El total de habitaciones por encima del nivel del suelo (no incluye baños).
+
+Functional: La calificación de la funcionalidad del hogar.
+
+Fireplaces: El número de chimeneas.
+
+FireplaceQu: La calidad de la chimenea.
+
+GarageType: La ubicación del garaje.
+
+GarageYrBlt: El año en que se construyó el garaje.
+
+GarageFinish: El acabado interior del garaje.
+
+GarageCars: El tamaño del garaje en capacidad de autos.
+
+GarageArea: El tamaño del garaje en pies cuadrados.
+
+GarageQual: La calidad del garaje.
+
+GarageCond: La condición del garaje.
+
+PavedDrive: La entrada pavimentada.
+
+WoodDeckSF: El área del porche de madera en pies cuadrados.
+
+OpenPorchSF: El área del porche abierto en pies cuadrados.
+
+EnclosedPorch: El área del porche cerrado en pies cuadrados.
+
+3SsnPorch: El área del porche de tres estaciones en pies cuadrados.
+
+ScreenPorch: El área del porche con mosquitero en pies cuadrados.
+
+PoolArea: El área de la piscina en pies cuadrados.
+
+PoolQC: La calidad de la piscina.
+
+Fence: La calidad de la valla.
+
+MiscFeature: Una característica miscelánea no cubierta en otras categorías.
+
+MiscVal: El valor en dólares de la característica miscelánea.
+
+MoSold: El mes de la venta.
+
+YrSold: El año de la venta.
+
+SaleType: El tipo de venta.
+
+SaleCondition: La condición de la venta.
