@@ -1,0 +1,523 @@
+MSSubClass: Identifica el tipo de vivienda involucrada en la venta.
+
+        20	1-STORY 1946 & NEWER ALL STYLES (1 PISO 1946 Y POSTERIORES, TODOS LOS ESTILOS)
+        30	1-STORY 1945 & OLDER (1 PISO 1945 Y ANTERIORES)
+        40	1-STORY W/FINISHED ATTIC ALL AGES (1 PISO CON ÁTICO TERMINADO, TODAS LAS EDADES)
+        45	1-1/2 STORY - UNFINISHED ALL AGES (1-1/2 PISOS - SIN TERMINAR, TODAS LAS EDADES)
+        50	1-1/2 STORY FINISHED ALL AGES (1-1/2 PISOS TERMINADOS, TODAS LAS EDADES)
+        60	2-STORY 1946 & NEWER (2 PISOS 1946 Y POSTERIORES)
+        70	2-STORY 1945 & OLDER (2 PISOS 1945 Y ANTERIORES)
+        75	2-1/2 STORY ALL AGES (2-1/2 PISOS, TODAS LAS EDADES)
+        80	SPLIT OR MULTI-LEVEL (NIVELES DIVIDIDOS O MÚLTIPLES)
+        85	SPLIT FOYER (VESTÍBULO DIVIDIDO)
+        90	DUPLEX - ALL STYLES AND AGES (DÚPLEX - TODOS LOS ESTILOS Y EDADES)
+       120	1-STORY PUD (Planned Unit Development) - 1946 & NEWER (PUD DE 1 PISO (DESARROLLO DE UNIDAD PLANIFICADA) - 1946 Y POSTERIORES)
+       150	1-1/2 STORY PUD - ALL AGES (PUD DE 1-1/2 PISOS - TODAS LAS EDADES)
+       160	2-STORY PUD - 1946 & NEWER (PUD DE 2 PISOS - 1946 Y POSTERIORES)
+       180	PUD - MULTILEVEL - INCL SPLIT LEV/FOYER (PUD - NIVELES MÚLTIPLES - INCLUYE NIVEL DIVIDIDO/VESTÍBULO)
+       190	2 FAMILY CONVERSION - ALL STYLES AND AGES (CONVERSIÓN DE 2 FAMILIAS - TODOS LOS ESTILOS Y EDADES)
+
+MSZoning: Identifica la clasificación de zonificación general de la venta.
+
+       A	Agriculture (Agricultura)
+       C	Commercial (Comercial)
+       FV	Floating Village Residential (Residencial en Pueblo Flotante)
+       I	Industrial (Industrial)
+       RH	Residential High Density (Residencial de Alta Densidad)
+       RL	Residential Low Density (Residencial de Baja Densidad)
+       RP	Residential Low Density Park (Parque Residencial de Baja Densidad)
+       RM	Residential Medium Density (Residencial de Densidad Media)
+
+LotFrontage: Metros lineales de calle conectados a la propiedad.
+
+LotArea: Tamaño del lote en pies cuadrados.
+
+Street: Tipo de acceso por carretera a la propiedad.
+
+       Grvl	Gravel (Grava)
+       Pave	Paved (Pavimentada)
+       	
+Alley: Tipo de acceso por callejón a la propiedad.
+
+       Grvl	Gravel (Grava)
+       Pave	Paved (Pavimentado)
+       NA 	No alley access (Sin acceso por callejón)
+
+LotShape: Forma general de la propiedad.
+
+       Reg	Regular (Regular)
+       IR1	Slightly irregular (Ligeramente irregular)
+       IR2	Moderately Irregular (Moderadamente Irregular)
+       IR3	Irregular (Irregular)
+       
+LandContour: Nivel del terreno de la propiedad.
+
+       Lvl	Near Flat/Level (Casi Plano/Nivelado)
+       Bnk	Banked - Quick and significant rise from street grade to building (Con Terraplén - Elevación rápida y significativa desde el nivel de la calle hasta el edificio)
+       HLS	Hillside - Significant slope from side to side (Ladera - Pendiente significativa de lado a lado)
+       Low	Depression (Depresión)
+
+Utilities: Tipo de servicios públicos disponibles.
+
+       AllPub	All public Utilities (E,G,W,& S) (Todos los servicios públicos (electricidad, gas, agua y alcantarillado))
+       NoSewr	Electricity, Gas, and Water (Septic Tank) (Electricidad, Gas y Agua (Tanque Séptico))
+       NoSeWa	Electricity and Gas Only (Solo Electricidad y Gas)
+       ELO	Electricity only (Solo electricidad)
+
+LotConfig: Configuración del lote.
+
+       Inside	Inside lot (Lote interior)
+       Corner	Corner lot (Lote en esquina)
+       CulDSac	Cul-de-sac (Calle sin salida)
+       FR2	Frontage on 2 sides of property (Frente en 2 lados de la propiedad)
+       FR3	Frontage on 3 sides of property (Frente en 3 lados de la propiedad)
+
+LandSlope: Pendiente de la propiedad.
+
+       Gtl	Gentle slope (Pendiente suave)
+       Mod	Moderate Slope (Pendiente moderada)
+       Sev	Severe Slope (Pendiente severa)
+
+Neighborhood: Ubicaciones físicas dentro de los límites de la ciudad de Ames.
+
+       Blmngtn	Bloomington Heights
+       Blueste	Bluestem
+       BrDale	Briardale
+       BrkSide	Brookside
+       ClearCr	Clear Creek
+       CollgCr	College Creek
+       Crawfor	Crawford
+       Edwards	Edwards
+       Gilbert	Gilbert
+       IDOTRR	Iowa DOT and Rail Road (Departamento de Transporte de Iowa y Ferrocarril)
+       MeadowV	Meadow Village
+       Mitchel	Mitchell
+       Names	North Ames
+       NoRidge	Northridge
+       NPkVill	Northpark Villa
+       NridgHt	Northridge Heights
+       NWAmes	Northwest Ames
+       OldTown	Old Town
+       SWISU	South & West of Iowa State University (Sur y Oeste de la Universidad Estatal de Iowa)
+       Sawyer	Sawyer
+       SawyerW	Sawyer West
+       Somerst	Somerset
+       StoneBr	Stone Brook
+       Timber	Timberland
+       Veenker	Veenker
+
+Condition1: Proximidad a varias condiciones.
+
+       Artery	Adjacent to arterial street (Adyacente a una calle arterial)
+       Feedr	Adjacent to feeder street (Adyacente a una calle de alimentación/distribución)
+       Norm	Normal (Normal)
+       RRNn	Within 200' of North-South Railroad (A menos de 200 pies del ferrocarril Norte-Sur)
+       RRAn	Adjacent to North-South Railroad (Adyacente al ferrocarril Norte-Sur)
+       PosN	Near positive off-site feature--park, greenbelt, etc. (Cerca de una característica externa positiva: parque, zona verde, etc.)
+       PosA	Adjacent to positive off-site feature (Adyacente a una característica externa positiva)
+       RRNe	Within 200' of East-West Railroad (A menos de 200 pies del ferrocarril Este-Oeste)
+       RRAe	Adjacent to East-West Railroad (Adyacente al ferrocarril Este-Oeste)
+
+Condition2: Proximidad a varias condiciones (si hay más de una presente).
+
+       Artery	Adjacent to arterial street (Adyacente a una calle arterial)
+       Feedr	Adjacent to feeder street (Adyacente a una calle de alimentación/distribución)
+       Norm	Normal (Normal)
+       RRNn	Within 200' of North-South Railroad (A menos de 200 pies del ferrocarril Norte-Sur)
+       RRAn	Adjacent to North-South Railroad (Adyacente al ferrocarril Norte-Sur)
+       PosN	Near positive off-site feature--park, greenbelt, etc. (Cerca de una característica externa positiva: parque, zona verde, etc.)
+       PosA	Adjacent to positive off-site feature (Adyacente a una característica externa positiva)
+       RRNe	Within 200' of East-West Railroad (A menos de 200 pies del ferrocarril Este-Oeste)
+       RRAe	Adjacent to East-West Railroad (Adyacente al ferrocarril Este-Oeste)
+
+BldgType: Tipo de vivienda.
+
+       1Fam	Single-family Detached (Casa unifamiliar aislada)
+       2FmCon	Two-family Conversion; originally built as one-family dwelling (Conversión de dos familias; originalmente construida como vivienda unifamiliar)
+       Duplx	Duplex (Dúplex)
+       TwnhsE	Townhouse End Unit (Unidad de casa adosada en el extremo)
+       TwnhsI	Townhouse Inside Unit (Unidad de casa adosada interior)
+
+HouseStyle: Estilo de vivienda.
+
+       1Story	One story (Un piso)
+       1.5Fin	One and one-half story: 2nd level finished (Un piso y medio: 2.º nivel terminado)
+       1.5Unf	One and one-half story: 2nd level unfinished (Un piso y medio: 2.º nivel sin terminar)
+       2Story	Two story (Dos pisos)
+       2.5Fin	Two and one-half story: 2nd level finished (Dos pisos y medio: 2.º nivel terminado)
+       2.5Unf	Two and one-half story: 2nd level unfinished (Dos pisos y medio: 2.º nivel sin terminar)
+       SFoyer	Split Foyer (Vestíbulo dividido)
+       SLvl	Split Level (Nivel dividido)
+
+OverallQual: Califica la calidad general del material y los acabados de la casa.
+
+       10	Very Excellent (Muy Excelente)
+       9	Excellent (Excelente)
+       8	Very Good (Muy Bueno)
+       7	Good (Bueno)
+       6	Above Average (Por encima del promedio)
+       5	Average (Promedio)
+       4	Below Average (Por debajo del promedio)
+       3	Fair (Justo/Regular)
+       2	Poor (Malo)
+       1	Very Poor (Muy Malo)
+
+OverallCond: Califica la condición general de la casa.
+
+       10	Very Excellent (Muy Excelente)
+       9	Excellent (Excelente)
+       8	Very Good (Muy Bueno)
+       7	Good (Bueno)
+       6	Above Average (Por encima del promedio)
+       5	Average (Promedio)
+       4	Below Average (Por debajo del promedio)
+       3	Fair (Justo/Regular)
+       2	Poor (Malo)
+       1	Very Poor (Muy Malo)
+
+YearBuilt: Fecha de construcción original.
+
+YearRemodAdd: Fecha de remodelación (igual que la fecha de construcción si no hubo remodelaciones o adiciones).
+
+RoofStyle: Tipo de tejado.
+
+       Flat	Flat (Plano)
+       Gable	Gable (A dos aguas)
+       Gambrel	Gabrel (Granero)
+       Hip	Hip (A cuatro aguas)
+       Mansard	Mansard (A la mansarda)
+       Shed	Shed (De cobertizo)
+
+RoofMatl: Material del tejado.
+
+       ClyTile	Clay or Tile (Arcilla o Teja)
+       CompShg	Standard (Composite) Shingle (Teja estándar (compuesta))
+       Membran	Membrane (Membrana)
+       Metal	Metal (Metal)
+       Roll	Roll (Rollo)
+       Tar&Grv	Gravel & Tar (Grava y alquitrán)
+       WdShake	Wood Shakes (Tablillas de madera)
+       WdShngl	Wood Shingles (Tejas de madera)
+
+Exterior1st: Revestimiento exterior de la casa.
+
+       AsbShng	Asbestos Shingles (Tejas de asbesto)
+       AsphShn	Asphalt Shingles (Tejas de asfalto)
+       BrkComm	Brick Common (Ladrillo común)
+       BrkFace	Brick Face (Ladrillo visto)
+       CBlock	Cinder Block (Bloque de hormigón)
+       CemntBd	Cement Board (Tablero de cemento)
+       HdBoard	Hard Board (Tablero de madera prensada)
+       ImStucc	Imitation Stucco (Estuco de imitación)
+       MetalSd	Metal Siding (Revestimiento metálico)
+       Other	Other (Otro)
+       Plywood	Plywood (Madera contrachapada)
+       PreCast	PreCast (Prefundido)
+       Stone	Stone (Piedra)
+       Stucco	Stucco (Estuco)
+       VinylSd	Vinyl Siding (Revestimiento de vinilo)
+       Wd Sdng	Wood Siding (Revestimiento de madera)
+       WdShing	Wood Shingles (Tejas de madera)
+
+Exterior2nd: Revestimiento exterior de la casa (si hay más de un material).
+
+       AsbShng	Asbestos Shingles (Tejas de asbesto)
+       AsphShn	Asphalt Shingles (Tejas de asfalto)
+       BrkComm	Brick Common (Ladrillo común)
+       BrkFace	Brick Face (Ladrillo visto)
+       CBlock	Cinder Block (Bloque de hormigón)
+       CemntBd	Cement Board (Tablero de cemento)
+       HdBoard	Hard Board (Tablero de madera prensada)
+       ImStucc	Imitation Stucco (Estuco de imitación)
+       MetalSd	Metal Siding (Revestimiento metálico)
+       Other	Other (Otro)
+       Plywood	Plywood (Madera contrachapada)
+       PreCast	PreCast (Prefundido)
+       Stone	Stone (Piedra)
+       Stucco	Stucco (Estuco)
+       VinylSd	Vinyl Siding (Revestimiento de vinilo)
+       Wd Sdng	Wood Siding (Revestimiento de madera)
+       WdShing	Wood Shingles (Tejas de madera)
+
+MasVnrType: Tipo de revestimiento de mampostería.
+
+       BrkCmn	Brick Common (Ladrillo común)
+       BrkFace	Brick Face (Ladrillo visto)
+       CBlock	Cinder Block (Bloque de hormigón)
+       None	None (Ninguno)
+       Stone	Stone (Piedra)
+
+MasVnrArea: Área de revestimiento de mampostería en pies cuadrados.
+
+ExterQual: Evalúa la calidad del material en el exterior.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Average/Typical (Promedio/Típico)
+       Fa	Fair (Justo/Regular)
+       Po	Poor (Malo)
+
+ExterCond: Evalúa la condición actual del material en el exterior.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Average/Typical (Promedio/Típico)
+       Fa	Fair (Justo/Regular)
+       Po	Poor (Malo)
+
+Foundation: Tipo de cimientos.
+
+       BrkTil	Brick & Tile (Ladrillo y Teja)
+       CBlock	Cinder Block (Bloque de hormigón)
+       PConc	Poured Concrete (Hormigón vertido)
+       Slab	Slab (Losa)
+       Stone	Stone (Piedra)
+       Wood	Wood (Madera)
+
+BsmtQual: Evalúa la altura del sótano.
+
+       Ex	Excellent (100+ inches) (Excelente (más de 100 pulgadas))
+       Gd	Good (90-99 inches) (Bueno (90-99 pulgadas))
+       TA	Typical (80-89 inches) (Típico (80-89 pulgadas))
+       Fa	Fair (70-79 inches) (Justo/Regular (70-79 pulgadas))
+       Po	Poor (<70 inches) (Malo (menos de 70 pulgadas))
+       NA	No Basement (Sin sótano)
+
+BsmtCond: Evalúa la condición general del sótano.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Typical - slight dampness allowed (Típico - se permite una ligera humedad)
+       Fa	Fair - dampness or some cracking or settling (Justo/Regular - humedad o algunas grietas o asentamientos)
+       Po	Poor - Severe cracking, settling, or wetness (Malo - Grietas severas, asentamientos o humedad)
+       NA	No Basement (Sin sótano)
+
+BsmtExposure: Se refiere a las paredes del sótano a nivel de jardín o con salida.
+
+       Gd	Good Exposure (Buena exposición)
+       Av	Average Exposure (split levels or foyers typically score average or above) (Exposición promedio (los niveles divididos o vestíbulos suelen tener una puntuación promedio o superior))
+       Mn	Minimum Exposure (Exposición mínima)
+       No	No Exposure (Sin exposición)
+       NA	No Basement (Sin sótano)
+
+BsmtFinType1: Calificación del área terminada del sótano.
+
+       GLQ	Good Living Quarters (Espacios habitables de buena calidad)
+       ALQ	Average Living Quarters (Espacios habitables de calidad promedio)
+       BLQ	Below Average Living Quarters (Espacios habitables por debajo del promedio)
+       Rec	Average Rec Room (Sala de recreo promedio)
+       LwQ	Low Quality (Baja calidad)
+       Unf	Unfinished (Sin terminar)
+       NA	No Basement (Sin sótano)
+
+BsmtFinSF1: Pies cuadrados terminados de tipo 1.
+
+BsmtFinType2: Calificación del área terminada del sótano (si hay varios tipos).
+
+       GLQ	Good Living Quarters (Espacios habitables de buena calidad)
+       ALQ	Average Living Quarters (Espacios habitables de calidad promedio)
+       BLQ	Below Average Living Quarters (Espacios habitables por debajo del promedio)
+       Rec	Average Rec Room (Sala de recreo promedio)
+       LwQ	Low Quality (Baja calidad)
+       Unf	Unfinished (Sin terminar)
+       NA	No Basement (Sin sótano)
+
+BsmtFinSF2: Pies cuadrados terminados de tipo 2.
+
+BsmtUnfSF: Pies cuadrados sin terminar del área del sótano.
+
+TotalBsmtSF: Pies cuadrados totales del área del sótano.
+
+Heating: Tipo de calefacción.
+
+       Floor	Floor Furnace (Horno de piso)
+       GasA	Gas forced warm air furnace (Horno de aire caliente forzado a gas)
+       GasW	Gas hot water or steam heat (Calefacción por agua caliente o vapor a gas)
+       Grav	Gravity furnace (Horno de gravedad)
+       OthW	Hot water or steam heat other than gas (Calefacción por agua caliente o vapor que no sea a gas)
+       Wall	Wall furnace (Horno de pared)
+
+HeatingQC: Calidad y condición de la calefacción.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Average/Typical (Promedio/Típico)
+       Fa	Fair (Justo/Regular)
+       Po	Poor (Malo)
+
+CentralAir: Aire acondicionado central.
+
+       N	No
+       Y	Yes (Sí)
+
+Electrical: Sistema eléctrico.
+
+       SBrkr	Standard Circuit Breakers & Romex (Disyuntores estándar y cableado Romex)
+       FuseA	Fuse Box over 60 AMP and all Romex wiring (Average) (Caja de fusibles de más de 60 amperios y todo el cableado Romex (Promedio))
+       FuseF	60 AMP Fuse Box and mostly Romex wiring (Fair) (Caja de fusibles de 60 amperios y principalmente cableado Romex (Justo))
+       FuseP	60 AMP Fuse Box and mostly knob & tube wiring (poor) (Caja de fusibles de 60 amperios y principalmente cableado de perilla y tubo (malo))
+       Mix	Mixed (Mixto)
+
+1stFlrSF: Pies cuadrados del primer piso.
+ 
+2ndFlrSF: Pies cuadrados del segundo piso.
+
+LowQualFinSF: Pies cuadrados terminados de baja calidad (todos los pisos).
+
+GrLivArea: Pies cuadrados de área habitable sobre el nivel del suelo.
+
+BsmtFullBath: Baños completos en el sótano.
+
+BsmtHalfBath: Medios baños en el sótano.
+
+FullBath: Baños completos sobre el nivel del suelo.
+
+HalfBath: Medios baños sobre el nivel del suelo.
+
+Bedroom: Dormitorios sobre el nivel del suelo (NO incluye dormitorios en el sótano).
+
+Kitchen: Cocinas sobre el nivel del suelo.
+
+KitchenQual: Calidad de la cocina.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Typical/Average (Típico/Promedio)
+       Fa	Fair (Justo/Regular)
+       Po	Poor (Malo)
+       	
+TotRmsAbvGrd: Total de habitaciones sobre el nivel del suelo (no incluye baños).
+
+Functional: Funcionalidad de la casa (se asume típica a menos que se justifiquen deducciones).
+
+       Typ	Typical Functionality (Funcionalidad típica)
+       Min1	Minor Deductions 1 (Deducciones menores 1)
+       Min2	Minor Deductions 2 (Deducciones menores 2)
+       Mod	Moderate Deductions (Deducciones moderadas)
+       Maj1	Major Deductions 1 (Deducciones mayores 1)
+       Maj2	Major Deductions 2 (Deducciones mayores 2)
+       Sev	Severely Damaged (Gravemente dañada)
+       Sal	Salvage only (Solo para salvamento)
+
+Fireplaces: Número de chimeneas.
+
+FireplaceQu: Calidad de la chimenea.
+
+       Ex	Excellent - Exceptional Masonry Fireplace (Excelente - Chimenea de mampostería excepcional)
+       Gd	Good - Masonry Fireplace in main level (Bueno - Chimenea de mampostería en el nivel principal)
+       TA	Average - Prefabricated Fireplace in main living area or Masonry Fireplace in basement (Promedio - Chimenea prefabricada en la sala de estar principal o chimenea de mampostería en el sótano)
+       Fa	Fair - Prefabricated Fireplace in basement (Justo/Regular - Chimenea prefabricada en el sótano)
+       Po	Poor - Ben Franklin Stove (Malo - Estufa Ben Franklin)
+       NA	No Fireplace (Sin chimenea)
+
+GarageType: Ubicación del garaje.
+
+       2Types	More than one type of garage (Más de un tipo de garaje)
+       Attchd	Attached to home (Adjunto a la casa)
+       Basment	Basement Garage (Garaje en el sótano)
+       BuiltIn	Built-In (Garage part of house - typically has room above garage) (Empotrado (el garaje forma parte de la casa, por lo general tiene una habitación encima))
+       CarPort	Car Port (Cobertizo para coche)
+       Detchd	Detached from home (Separado de la casa)
+       NA	No Garage (Sin garaje)
+
+GarageYrBlt: Año de construcción del garaje.
+
+GarageFinish: Acabado interior del garaje.
+
+       Fin	Finished (Terminado)
+       RFn	Rough Finished (Acabado rústico)
+       Unf	Unfinished (Sin terminar)
+       NA	No Garage (Sin garaje)
+
+GarageCars: Tamaño del garaje en capacidad de coches.
+
+GarageArea: Tamaño del garaje en pies cuadrados.
+
+GarageQual: Calidad del garaje.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Typical/Average (Típico/Promedio)
+       Fa	Fair (Justo/Regular)
+       Po	Poor (Malo)
+       NA	No Garage (Sin garaje)
+
+GarageCond: Condición del garaje.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Typical/Average (Típico/Promedio)
+       Fa	Fair (Justo/Regular)
+       Po	Poor (Malo)
+       NA	No Garage (Sin garaje)
+
+PavedDrive: Camino de entrada pavimentado.
+
+       Y	Paved (Pavimentado)
+       P	Partial Pavement (Pavimento parcial)
+       N	Dirt/Gravel (Tierra/Grava)
+
+WoodDeckSF: Área de la terraza de madera en pies cuadrados.
+
+OpenPorchSF: Área del porche abierto en pies cuadrados.
+
+EnclosedPorch: Área del porche cerrado en pies cuadrados.
+
+3SsnPorch: Área del porche de tres estaciones en pies cuadrados.
+
+ScreenPorch: Área del porche con mosquitero en pies cuadrados.
+
+PoolArea: Área de la piscina en pies cuadrados.
+
+PoolQC: Calidad de la piscina.
+
+       Ex	Excellent (Excelente)
+       Gd	Good (Bueno)
+       TA	Average/Typical (Promedio/Típico)
+       Fa	Fair (Justo/Regular)
+       NA	No Pool (Sin piscina)
+
+Fence: Calidad de la cerca.
+
+       GdPrv	Good Privacy (Buena privacidad)
+       MnPrv	Minimum Privacy (Privacidad mínima)
+       GdWo	Good Wood (Buena madera)
+       MnWw	Minimum Wood/Wire (Madera/alambre mínima)
+       NA	No Fence (Sin cerca)
+
+MiscFeature: Característica miscelánea no cubierta en otras categorías.
+
+       Elev	Elevator (Ascensor)
+       Gar2	2nd Garage (if not described in garage section) (Segundo garaje (si no se describe en la sección de garaje))
+       Othr	Other (Otro)
+       Shed	Shed (over 100 SF) (Caseta (más de 100 pies cuadrados))
+       TenC	Tennis Court (Cancha de tenis)
+       NA	None (Ninguna)
+
+MiscVal: Valor en dólares de la característica miscelánea.
+
+MoSold: Mes de venta (MM).
+
+YrSold: Año de venta (AAAA).
+
+SaleType: Tipo de venta.
+
+       WD 	Warranty Deed - Conventional (Escritura de garantía - Convencional)
+       CWD	Warranty Deed - Cash (Escritura de garantía - Efectivo)
+       VWD	Warranty Deed - VA Loan (Escritura de garantía - Préstamo de la VA)
+       New	Home just constructed and sold (Casa recién construida y vendida)
+       COD	Court Officer Deed/Estate (Escritura de funcionario judicial/herencia)
+       Con	Contract 15% Down payment regular terms (Contrato con 15% de pago inicial y términos regulares)
+       ConLw	Contract Low Down payment and low interest (Contrato con pago inicial bajo e interés bajo)
+       ConLI	Contract Low Interest (Contrato con interés bajo)
+       ConLD	Contract Low Down (Contrato con pago inicial bajo)
+       Oth	Other (Otro)
+
+SaleCondition: Condición de venta.
+
+       Normal	Normal Sale (Venta normal)
+       Abnorml	Abnormal Sale - trade, foreclosure, short sale (Venta anormal - permuta, ejecución hipotecaria, venta corta)
+       AdjLand	Adjoining Land Purchase (Compra de terreno adyacente)
+       Alloca	Allocation - two linked properties with separate deeds, typically condo with a garage unit (Asignación - dos propiedades vinculadas con escrituras separadas, normalmente un condominio con una unidad de garaje)
+       Family	Sale between family members (Venta entre miembros de la familia)
+       Partial	Home was not completed when last assessed (associated with New Homes) (La casa no estaba terminada en la última tasación (asociado con casas nuevas))
