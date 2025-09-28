@@ -1,44 +1,62 @@
 # House Prices Prediction Project
 
-## Overview
-Este proyecto tiene como objetivo desarrollar un modelo de Machine Learning para predecir los precios de viviendas basado en diferentes características como tamaño, ubicación, número de habitaciones, entre otros.
-
-## Objetivo
-Crear un modelo predictivo que pueda:
-- Estimar con precisión el precio de venta de casas
-- Identificar las características que más influyen en el precio
-- Proporcionar insights valiosos sobre el mercado inmobiliario
-
-## Dataset
-El proyecto utiliza un conjunto de datos que incluye:
-- Precios de venta de casas
-- Características físicas de las propiedades
-- Información del vecindario
-- Condiciones de venta
-- Otros atributos relevantes
+## Descripción
+Proyecto de Machine Learning para predecir precios de viviendas usando técnicas avanzadas de preprocesamiento de datos y modelos predictivos.
 
 ## Estructura del Proyecto
 ```
 ML-house-prices/
 ├── data/
-│   ├── raw/           # Datos originales sin procesar
-│   └── transform/     # Datos procesados
-├── models/            # Modelos entrenados
-├── notebooks/        # Jupyter notebooks para análisis
-└── ml-house-prices-env/  # Entorno virtual
+│   ├── raw/           # Datos sin procesar (train.csv, test.csv)
+│   └── processed/     # Datos procesados
+├── notebooks/
+│   ├── eda_01.ipynb           # Análisis exploratorio y tratamiento de datos faltantes
+│   └── features_engineering.ipynb  # Ingeniería de características
+├── functions/
+│   ├── __init__.py
+│   └── transformers.py        # Funciones de transformación personalizadas
+└── README.md
 ```
 
+## Procesamiento de Datos
+### Manejo de Datos Faltantes
+- Eliminación de features con >85% de datos faltantes
+- Imputación específica para características del sótano
+- Tratamiento especial para características del garaje
+- Imputación basada en relaciones entre variables
+
+### Features Engineering
+- Transformadores personalizados para características del sótano
+- Pipeline de transformación de datos
+- Validación de transformaciones
+
+## Visualizaciones
+- Distribuciones de características del sótano
+- Análisis de área y calidad del garaje
+- Relaciones entre variables categóricas y numéricas
+
 ## Tecnologías Utilizadas
-- Python
+- Python 3.x
 - Pandas
 - NumPy
 - Scikit-learn
-- Jupyter Notebooks
+- Matplotlib
+- Seaborn
 
 ## Próximos Pasos
-1. Análisis exploratorio de datos
-2. Preprocesamiento y limpieza de datos
-3. Ingeniería de características
-4. Desarrollo y entrenamiento del modelo
-5. Evaluación y optimización
-6. Documentación de resultados
+1. Completar pipeline de preprocesamiento
+2. Implementar y evaluar modelos de ML
+3. Optimización de hiperparámetros
+4. Validación cruzada
+5. Implementación en producción
+
+## Contribución
+Para contribuir al proyecto:
+1. Fork el repositorio
+2. Crea una rama para tu feature
+3. Commit tus cambios
+4. Push a la rama
+5. Crea un Pull Request
+
+## Licencia
+Este proyecto está bajo la licencia MIT.
