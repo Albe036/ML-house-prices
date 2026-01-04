@@ -374,9 +374,9 @@ FullBath: Baños completos sobre el nivel del suelo.
 
 HalfBath: Medios baños sobre el nivel del suelo.
 
-Bedroom: Dormitorios sobre el nivel del suelo (NO incluye dormitorios en el sótano).
+Bedroom || BedroomAbvGr: Dormitorios sobre el nivel del suelo (NO incluye dormitorios en el sótano).
 
-Kitchen: Cocinas sobre el nivel del suelo.
+Kitchen || KitchenAbvGr: Cocinas sobre el nivel del suelo.
 
 KitchenQual: Calidad de la cocina.
 
