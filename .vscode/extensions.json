@@ -1,0 +1,19 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.datawrangler",
+        "charliermarsh.ruff",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.mypy-type-checker",
+        "mechatroner.rainbow-csv",
+        "GrapeCity.gc-excelviewer",
+        "eamodio.gitlens",
+        "usernamehw.errorlens",
+        "GitHub.copilot",
+    ]
+}
