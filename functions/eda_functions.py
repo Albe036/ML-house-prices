@@ -14,6 +14,9 @@ def list_missing_values(df):
     display(missing_data)
     
 
+#MCAR: missing completely at random (completamente al azar)
+#MNAR: missing not at random (no al azar)
+#MAR: missing at random (al azar)
 def test_mcar(df, variable_con_nulos, target_var='SalePrice'):
     # 1. Crear una copia temporal con la bandera de nulos
     temp_df = df.copy()
