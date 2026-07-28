@@ -1,3 +1,4 @@
 {
-    "editor.fontFamily": "'RobotoMono Nerd Font Mono','CommitMono Nerd Font', 'iMWritingDuo Nerd Font'"
+    "editor.fontFamily": "'JetBrainsMono Nerd Font','CommitMono Nerd Font', 'iMWritingDuo Nerd Font'",
+    "editor.fontSize": 16.5
 }
