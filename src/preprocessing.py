@@ -25,7 +25,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # imputacion de datos faltantes
 # Clase imputacion
-class DataImputer(BaseEstimator, TransformerMixin):
+class CustomDataImputer(BaseEstimator, TransformerMixin):
     def __init__(self):
         self.modeBsmtExposure = None
         self.modeElectrical = None
@@ -50,6 +50,12 @@ class DataImputer(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         xDF = X.copy()
+        #Estandarizacion mayúsculas/minúsculas
+        cols_estandarization = ["BldgType"]
+        for col in cols_estandarization:
+            if col in xDF.columns:
+                xDF[col] = xDF[col].str.lower()
+        
 
         # Imputer PoolQC
         xDF.loc[xDF["PoolArea"] == 0, "PoolQC"] = "NA"
@@ -99,21 +105,38 @@ class DataImputer(BaseEstimator, TransformerMixin):
 
         return xDF
 
-cat_simpleImputer = ["Alley", "Fence"]
-num_simpleImputer = ["MasVnrArea"]
 
-pipe_preprocessing = Pipeline(
-    [
-        ("imputer_cat", SimpleImputer(strategy="constant", fill_value="NA", missing_values=None)),
-        ("imputer_num", SimpleImputer(strategy="constant", fill_value=0, missing_values=None)),
-        ("data_imputer", DataImputer()),
+#Simple imputer
+catSimpleImputer = ["Alley", "Fence"]
+numSimpleImputer = ["MasVnrArea"]
+
+simpleImputerTransformer = ColumnTransformer(
+    transformers=[
+        ("imputer_cat", SimpleImputer(strategy="constant", fill_value="NA", missing_values=None), catSimpleImputer),
+        ("imputer_num", SimpleImputer(strategy="constant", fill_value=0, missing_values=None), numSimpleImputer),
     ]
 )
-featuresOneHot = ["MiscFeature", "Alley"]
-featuresOrdinal = ["PoolQC", "Fence"]
-mappingPoolQC = ['NA', 'Fa', 'TA', 'Gd', 'Ex']
-mappingFence = ['NA', 'MnWw', 'GdWo', 'MnPrv', 'GdPrv']
 
-""" pipe_featureCodification = pipeline([
-    ("ordinalPoolQC", OrdinalEncoder(categories=[mappingOrdinal], handle_unknown='use_encoded_value', unknown_value=-1)),
-]) """
+AllPreprocessing = Pipeline(
+    [
+        ("simple_imputer", simpleImputerTransformer),
+        ("data_imputer", CustomDataImputer()),
+    ]
+)
+
+featuresOneHot = ["MiscFeature", "Alley", "GarageType", "Electrical", "BldgType"]
+featMappingOrdinal = {
+    "PoolQC": ['NA', 'Fa', 'TA', 'Gd', 'Ex'],
+    "Fence": ['NA', 'MnWw', 'GdWo', 'MnPrv', 'GdPrv'],
+    "MasVnrType": ['None', 'BrkCmn', 'BrkFace', 'Stone'],
+    "FireplaceQu": ['NA', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+    "GarageQual": ['NA', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+    "GarageFinish": ['NA', 'Unf', 'RFn', 'Fin'],
+    "GarageCond": ['NA', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+    "BsmtExposure": ['NA', 'No', 'Mn', 'Av', 'Gd'],
+    "BsmtFinType2": ['NA', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
+    "BsmtQual": ['NA', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+    "BsmtFinType1": ['NA', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
+    "BsmtCond": ['NA', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+    "BldgType": ['1Fam', '2fmCon', 'Duplex', 'TwnhsE', 'Twnhs'],
+}
