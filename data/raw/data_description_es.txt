@@ -50,7 +50,7 @@ LotShape: Forma general de la propiedad.
        IR2	Moderately Irregular (Moderadamente Irregular)
        IR3	Irregular (Irregular)
        
-LandCotour: Nivel del terreno de la propiedad.
+LandContour: Nivel del terreno de la propiedad.
 
        Lvl	Near Flat/Level (Casi Plano/Nivelado)
        Bnk	Banked - Quick and significant rise from street grade to building (Con Terraplén - Elevación rápida y significativa desde el nivel de la calle hasta el edificio)
