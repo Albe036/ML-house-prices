@@ -255,7 +255,7 @@ AllPreprocessing = Pipeline(
     ]
 )
 
-model_pipeline = Pipeline(
+""" model_pipeline = Pipeline(
     [
     ("preprocessing", AllPreprocessing), 
     ("regressor", SVR(kernel="rbf", C=1000.0, epsilon=0.1))
@@ -272,4 +272,4 @@ print(f"R2 Score: {r2:.4f}")
 print(f"RMSE: {rmse:.4f}")
 
 joblib.dump(model_pipeline, MODEL_PATH / "house_price_model_svr.pkl")
-print(f"Model saved to {MODEL_PATH / 'house_price_model.pkl'}")
+print(f"Model saved to {MODEL_PATH / 'house_price_model.pkl'}") """
