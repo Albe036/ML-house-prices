@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import joblib
 from pathlib import Path
 from sklearn import pipeline
 from sklearn.compose import ColumnTransformer
@@ -11,14 +13,18 @@ from sklearn.preprocessing import (
     OrdinalEncoder,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVR
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.metrics import mean_squared_error, r2_score
 import sys, os
 
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 TRAIN_PATH = BASE_DIR / "data" / "raw" / "train.csv"
+MODEL_PATH = BASE_DIR / "models"
 useTrain = pd.read_csv(TRAIN_PATH)
 
 X = useTrain.drop(columns=["SalePrice"])
@@ -67,12 +73,11 @@ class CustomDataImputer(BaseEstimator, TransformerMixin):
         xDF["Exterior1st"] = xDF["Exterior1st"].replace("Wd Shng", "WdShing")
         xDF["Exterior1st"] = xDF["Exterior1st"].replace("Brk Cmn", "BrkComm")
         xDF["Exterior1st"] = xDF["Exterior1st"].replace("CmentBd", "CemntBd")
-        
+
         # Estandarizacion mayúsculas/minúsculas
         for col in xDF.columns:
             if xDF[col].dtype == "object":
                 xDF[col] = xDF[col].str.lower()
-        
 
         # Imputer PoolQC
         xDF.loc[xDF["PoolArea"] == 0, "PoolQC"] = "na"
@@ -149,8 +154,11 @@ simpleImputerTransformer = ColumnTransformer(
             SimpleImputer(strategy="constant", fill_value=0),
             numSimpleImputer,
         ),
-    ]
+    ],
+    remainder="passthrough",
+    verbose_feature_names_out=False,
 )
+simpleImputerTransformer.set_output(transform="pandas")
 
 featuresOneHot = [
     "MiscFeature",
@@ -166,12 +174,13 @@ featuresOneHot = [
     "MSZoning",
     "HouseStyle",
     "Heating",
+    "Exterior1st",
     "Exterior2nd",
     "RoofMatl",
     "RoofStyle",
     "Functional",
     "SaleType",
-    "SaleCondition"
+    "SaleCondition",
 ]
 featMappingOrdinal = {
     "PoolQC": ["na", "fa", "ta", "gd", "ex"],
@@ -199,27 +208,40 @@ featMappingOrdinal = {
     "PavedDrive": ["n", "p", "y"],
 }
 
+
 cols_ordinal = list(featMappingOrdinal.keys())
 cats_ordinal = list(featMappingOrdinal.values())
-ordinalEnconder = Pipeline([
-    ('ordinal', OrdinalEncoder(categories=cats_ordinal, dtype=float, handle_unknown='use_encoded_value', unknown_value=-1)),
-    ("scaler", StandardScaler())
-])
-oneHotEncoder = Pipeline([
-    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, dtype=int))
-])
-featuresContinuas = [col for col in X.columns if col not in featuresOneHot and col not in cols_ordinal]
+ordinalEnconder = Pipeline(
+    [
+        (
+            "ordinal",
+            OrdinalEncoder(
+                categories=cats_ordinal,
+                dtype=float,
+                handle_unknown="use_encoded_value",
+                unknown_value=-1,
+            ),
+        ),
+        ("scaler", StandardScaler()),
+    ]
+)
+oneHotEncoder = Pipeline(
+    [("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False, dtype=int))]
+)
 
-numericTransformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler())
-])
+featuresContinuous = [
+    col for col in X.columns if col not in featuresOneHot and col not in cols_ordinal
+]
+
+numericTransformer = Pipeline(
+    [("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+)
 
 processorEncoder = ColumnTransformer(
     transformers=[
         ("ordinal", ordinalEnconder, cols_ordinal),
         ("onehot", oneHotEncoder, featuresOneHot),
-        ("continua", numericTransformer, featuresContinuas)
+        ("continuous", numericTransformer, featuresContinuous),
     ],
     remainder="drop",
 )
@@ -232,3 +254,22 @@ AllPreprocessing = Pipeline(
         ("encoder", processorEncoder),
     ]
 )
+
+model_pipeline = Pipeline(
+    [
+    ("preprocessing", AllPreprocessing), 
+    ("regressor", SVR(kernel="rbf", C=1000.0, epsilon=0.1))
+    ]
+)
+
+model_pipeline.fit(X_train, y_train)
+y_pred = model_pipeline.predict(X_test)
+
+r2 = r2_score(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+print(f"R2 Score: {r2:.4f}")
+print(f"RMSE: {rmse:.4f}")
+
+joblib.dump(model_pipeline, MODEL_PATH / "house_price_model_svr.pkl")
+print(f"Model saved to {MODEL_PATH / 'house_price_model.pkl'}")
