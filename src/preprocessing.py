@@ -12,6 +12,7 @@ from sklearn.preprocessing import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import StandardScaler
 import sys, os
 
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
@@ -66,6 +67,7 @@ class CustomDataImputer(BaseEstimator, TransformerMixin):
         xDF["Exterior1st"] = xDF["Exterior1st"].replace("Wd Shng", "WdShing")
         xDF["Exterior1st"] = xDF["Exterior1st"].replace("Brk Cmn", "BrkComm")
         xDF["Exterior1st"] = xDF["Exterior1st"].replace("CmentBd", "CemntBd")
+        
         # Estandarizacion mayúsculas/minúsculas
         for col in xDF.columns:
             if xDF[col].dtype == "object":
@@ -200,18 +202,26 @@ featMappingOrdinal = {
 cols_ordinal = list(featMappingOrdinal.keys())
 cats_ordinal = list(featMappingOrdinal.values())
 ordinalEnconder = Pipeline([
-    ('ordinal', OrdinalEncoder(categories=cats_ordinal, dtype=int, handle_unknown='use_encoded_value', unknown_value=-1))
+    ('ordinal', OrdinalEncoder(categories=cats_ordinal, dtype=float, handle_unknown='use_encoded_value', unknown_value=-1)),
+    ("scaler", StandardScaler())
 ])
 oneHotEncoder = Pipeline([
     ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False, dtype=int))
+])
+featuresContinuas = [col for col in X.columns if col not in featuresOneHot and col not in cols_ordinal]
+
+numericTransformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler())
 ])
 
 processorEncoder = ColumnTransformer(
     transformers=[
         ("ordinal", ordinalEnconder, cols_ordinal),
         ("onehot", oneHotEncoder, featuresOneHot),
+        ("continua", numericTransformer, featuresContinuas)
     ],
-    remainder="passthrough",
+    remainder="drop",
 )
 
 
