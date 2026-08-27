@@ -3,6 +3,11 @@ from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 import numpy as np
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+MODEL_PATH = BASE_DIR / "models" / "house_price_model.pkl"
+TEST_PATH = BASE_DIR / "data" / "raw" / "test.csv"
 
 model_pipeline = Pipeline([
   ("preprocessing", AllPreprocessing()),

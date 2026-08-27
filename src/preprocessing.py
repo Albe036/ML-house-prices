@@ -27,6 +27,8 @@ TRAIN_PATH = BASE_DIR / "data" / "raw" / "train.csv"
 MODEL_PATH = BASE_DIR / "models"
 useTrain = pd.read_csv(TRAIN_PATH)
 
+
+
 X = useTrain.drop(columns=["SalePrice"])
 y = useTrain["SalePrice"]
 
@@ -254,22 +256,3 @@ AllPreprocessing = Pipeline(
         ("encoder", processorEncoder),
     ]
 )
-
-""" model_pipeline = Pipeline(
-    [
-    ("preprocessing", AllPreprocessing), 
-    ("regressor", SVR(kernel="rbf", C=1000.0, epsilon=0.1))
-    ]
-)
-
-model_pipeline.fit(X_train, y_train)
-y_pred = model_pipeline.predict(X_test)
-
-r2 = r2_score(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-
-print(f"R2 Score: {r2:.4f}")
-print(f"RMSE: {rmse:.4f}")
-
-joblib.dump(model_pipeline, MODEL_PATH / "house_price_model_svr.pkl")
-print(f"Model saved to {MODEL_PATH / 'house_price_model.pkl'}") """
