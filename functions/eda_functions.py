@@ -55,3 +55,43 @@ def test_mcar(df, variable_con_nulos, target_var='SalePrice'):
         print("Resultado: No hay diferencia significativa. Posible MCAR (Aleatorio).")
     else:
         print("Resultado: Diferencia significativa detectada. Es MAR o MNAR (No aleatorio).")
+
+
+def mannwhitneyu_method(df, m="", y="", onlyTrue=False):
+    import pandas as pd
+    import numpy as np
+    from scipy.stats import mannwhitneyu
+
+    useData = df.copy()
+    #Creacion de variable indicadora
+    nameBool = f"{m}_M"
+    #Convertir la variable indicadora de ausencia a booleana
+    useData[nameBool] = useData[m].isna()
+
+    numeric_cols = useData.select_dtypes(include=[np.number]).columns.tolist()
+    if "Id" in numeric_cols:
+        numeric_cols.remove("Id")
+
+    result = []
+
+    for col in numeric_cols:
+        groupWithOutMissing = useData.loc[useData[m].notna(), col].dropna()
+        groupWithMissing = useData.loc[useData[m].isna(), col].dropna()
+
+        if len(groupWithOutMissing) > 0 and len(groupWithMissing) > 0:
+            stat, p_value = mannwhitneyu(
+                groupWithMissing, groupWithOutMissing, alternative="two-sided"
+            )
+            result.append(
+                {
+                    "name_feature": col,
+                    "value_mann_whitney_u": stat,
+                    "p_value": p_value,
+                    "evidence_MAR": p_value < 0.05,
+                }
+            )
+    df_res = pd.DataFrame(result).sort_values(by="p_value")
+    df_res['p_value'] = df_res['p_value'].round(5)
+    if onlyTrue:
+        df_res = df_res[df_res['evidence_MAR']]
+    return df_res
