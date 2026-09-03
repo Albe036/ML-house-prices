@@ -2,8 +2,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import mannwhitneyu
 from IPython.display import display
+from scipy.stats import mannwhitneyu, spearmanr, ttest_ind, ks_2samp, pointbiserialr
+
+useData = pd.read_csv(
+    "C:\\Users\\albeiro\\Documents\\GitHub\\ML-house-prices\\data\\raw\\train.csv"
+)
 
 
 def list_missing_values(df):
@@ -64,96 +68,31 @@ def test_mcar(df, variable_con_nulos, target_var="SalePrice"):
         )
 
 
-def mannwhitneyu_tstudent_method(df, m="", y="", onlyTrue=False, method=0):
-    import pandas as pd
-    import numpy as np
-    from scipy.stats import mannwhitneyu, ttest_ind, ks_2samp, pointbiserialr
-
-    MANN_WHITNEY_U = 0
-    T_STUDENT = 1
-    KOLMOGOROV_SMIRNOV = 2
-    POINT_BISERIAL = 3
-    SPEAR_MANR = 4
-
-    useData = df.copy()
-    # Creacion de variable indicadora
-    nameBool = f"{m}_M"
-    # Convertir la variable indicadora de ausencia a booleana
-    useData[nameBool] = useData[m].isna()
-
-    numeric_cols = useData.select_dtypes(include=[np.number]).columns.tolist()
-    if "Id" in numeric_cols:
-        numeric_cols.remove("Id")
-
-    result = []
-
-    for col in numeric_cols:
-        groupWithOutMissing = useData.loc[useData[m].notna(), col].dropna()
-        groupWithMissing = useData.loc[useData[m].isna(), col].dropna()
-
-        if len(groupWithOutMissing) > 0 and len(groupWithMissing) > 0:
-            stat_method = ""
-            if method == MANN_WHITNEY_U:
-                stat, p_value = mannwhitneyu(
-                    groupWithMissing, groupWithOutMissing, alternative="two-sided"
-                )
-                stat_method = "Mann-Whitney U"
-            elif method == T_STUDENT:
-                stat, p_value = ttest_ind(
-                    groupWithMissing,
-                    groupWithOutMissing,
-                    equal_var=False,
-                    alternative="two-sided",
-                )
-                stat_method = "T-Student"
-            elif method == KOLMOGOROV_SMIRNOV:
-                stat, p_value = ks_2samp(
-                    groupWithMissing, groupWithOutMissing, alternative="two-sided"
-                )
-                stat_method = "Kolmogorov-Smirnov"
-            elif method == POINT_BISERIAL:
-                stat, p_value = pointbiserialr(useData[nameBool], useData[col])
-                stat_method = "Point-Biserial"
-            elif method == SPEAR_MANR:
-                from scipy.stats import spearmanr
-                stat, p_value = spearmanr(useData[nameBool], useData[col])
-                stat_method = "Spearman"
-            result.append(
-                {
-                    "name_feature": col,
-                    stat_method: stat,
-                    "p_value": p_value,
-                    "evidence_MAR": p_value < 0.05,
-                }
-            )
-    df_res = pd.DataFrame(result).sort_values(by="p_value")
-    df_res["p_value"] = df_res["p_value"].round(5)
-    if onlyTrue:
-        df_res = df_res[df_res["evidence_MAR"]]
-    return df_res
-
-
-class HypothesisTest:
-    import numpy as np
-    import pandas as pd
-    from scipy.stats import mannwhitneyu, ttest_ind, ks_2samp, pointbiserialr
-    def __init__(self, df, baseFeature, onlyTrue=False):
+class HypothesisTestNumeric:
+    def __init__(self, df, baseFeature, onlyTrue=False, alpha=0.05):
         self.useData = df.copy()
         self.baseFeature = baseFeature
         self.baseFeature_M = f"{baseFeature}_M"
-        self.numeric_cols = None
+        self.numeric_cols = []
         self.onlyTrue = onlyTrue
+        self.alpha = alpha
+        self.define_groups()
 
     def define_groups(self):
         self.useData[self.baseFeature_M] = self.useData[self.baseFeature].isna()
-        self.numeric_cols = self.useData.select_dtypes(include=np.number).columns.tolist()
+        self.numeric_cols = self.useData.select_dtypes(
+            include=[np.number]
+        ).columns.tolist()
         if "Id" in self.numeric_cols:
             self.numeric_cols.remove("Id")
 
     def __split_groups(self, col):
-        z = self.baseFeature_M
-        dataMissing = self.useData.loc[self.useData[z].isna(), col]
-        dataNotMissing = self.useData.loc[self.useData[z].notna(), col]
+        dataMissing = self.useData.loc[
+            self.useData[self.baseFeature].isna(), col
+        ].dropna()
+        dataNotMissing = self.useData.loc[
+            self.useData[self.baseFeature].notna(), col
+        ].dropna()
         return dataMissing, dataNotMissing
 
     def __config_output(self, res):
@@ -163,17 +102,106 @@ class HypothesisTest:
             res_df = res_df[res_df["evidence_MAR"]]
         return res_df
 
-    def mann_whitney_u(self, dataMissing, dataNotMissing):
-        z = self.baseFeature_M
+    def mann_whitney_u(self):
         res = []
         for col in self.numeric_cols:
-            m1, m0 = self.__split_groups(col)
+            m_1, m_0 = self.__split_groups(col)
             if len(m_1) > 0 and len(m_0) > 0:
-                stat, p_value = mannwhitneyu(dataMissing, dataNotMissing, alternative="two-sided")
-                result.append({
-                    "name_feature": col,
-                    "mann_whitney_U": stat,
-                    "p_value": p_value,
-                    "evidence_MAR": p_value < 0.05,
-                })
+                stat, p_value = mannwhitneyu(m_1, m_0, alternative="two-sided")
+                res.append(
+                    {
+                        "name_feature": col,
+                        "mann_whitney_U": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                    }
+                )
         return self.__config_output(res)
+
+    def t_student(self):
+        res = []
+        for col in self.numeric_cols:
+            m_1, m_0 = self.__split_groups(col)
+            if len(m_1) > 0 and len(m_0) > 0:
+                stat, p_value = ttest_ind(
+                    m_1, m_0, equal_var=False, alternative="two-sided"
+                )
+                res.append(
+                    {
+                        "name_feature": col,
+                        "t_student": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                    }
+                )
+        return self.__config_output(res)
+
+    def kolmogorov_smirnov(self):
+        res = []
+        for col in self.numeric_cols:
+            m_1, m_0 = self.__split_groups(col)
+            if len(m_1) > 0 and len(m_0) > 0:
+                stat, p_value = ks_2samp(m_1, m_0)
+                res.append(
+                    {
+                        "name_feature": col,
+                        "kolmogorov_smirnov": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                    }
+                )
+        return self.__config_output(res)
+
+    def point_biserial(self):
+        res = []
+        for col in self.numeric_cols:
+            m_1, m_0 = self.__split_groups(col)
+            if len(m_1) > 0 and len(m_0) > 0:
+                stat, p_value = pointbiserialr(
+                    self.useData[self.baseFeature_M], self.useData[col]
+                )
+                res.append(
+                    {
+                        "name_feature": col,
+                        "point_biserial": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                    }
+                )
+        return self.__config_output(res)
+
+    def spearman(self):
+        res = []
+        for col in self.numeric_cols:
+            m_1, m_0 = self.__split_groups(col)
+            if len(m_1) > 0 and len(m_0) > 0:
+                stat, p_value = spearmanr(
+                    self.useData[self.baseFeature_M], self.useData[col]
+                )
+                res.append(
+                    {
+                        "name_feature": col,
+                        "spearman": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                    }
+                )
+        return self.__config_output(res)
+
+class HypothesisTestCategorical:
+
+    def __init__(self, df, baseFeature, onlyTrue=False, alpha=0.05):
+        self.useData = df.copy()
+        self.baseFeature = baseFeature
+        self.baseFeature_M = f"{baseFeature}_M"
+        self.onlyTrue = onlyTrue
+        self.alpha = alpha
+        self.categorical_cols = []
+
+    def define_groups(self):
+        self.useData[self.baseFeature_M] = self.useData[self.baseFeature].isna()
+        self.numeric_cols = self.useData.select_dtypes(
+            include=[np.]
+        ).columns.tolist()
+        if "Id" in self.numeric_cols:
+            self.numeric_cols.remove("Id")
