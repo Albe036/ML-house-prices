@@ -197,7 +197,7 @@ class HypothesisTestNumeric:
     def define_groups(self):
         self.useData[self.baseFeature_M] = self.useData[self.baseFeature].isna()
         self.numeric_cols = self.useData.select_dtypes(
-            include=[np.]
+            include=['object', 'category']
         ).columns.tolist()
         if "Id" in self.numeric_cols:
             self.numeric_cols.remove("Id") """
