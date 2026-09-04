@@ -87,12 +87,8 @@ class HypothesisTestNumeric:
             self.numeric_cols.remove("Id")
 
     def __split_groups(self, col):
-        dataMissing = self.useData.loc[
-            self.useData[self.baseFeature].isna(), col
-        ].dropna()
-        dataNotMissing = self.useData.loc[
-            self.useData[self.baseFeature].notna(), col
-        ].dropna()
+        dataMissing = self.useData.loc[self.useData[self.baseFeature].isna(), col].dropna()
+        dataNotMissing = self.useData.loc[self.useData[self.baseFeature].notna(), col].dropna()
         return dataMissing, dataNotMissing
 
     def __config_output(self, res):
@@ -102,7 +98,7 @@ class HypothesisTestNumeric:
             res_df = res_df[res_df["evidence_MAR"]]
         return res_df
 
-    def mann_whitney_u(self):
+    def mann_whitney_u(self):   
         res = []
         for col in self.numeric_cols:
             m_1, m_0 = self.__split_groups(col)
@@ -188,7 +184,7 @@ class HypothesisTestNumeric:
                 )
         return self.__config_output(res)
 
-class HypothesisTestCategorical:
+""" class HypothesisTestCategorical:
 
     def __init__(self, df, baseFeature, onlyTrue=False, alpha=0.05):
         self.useData = df.copy()
@@ -204,4 +200,68 @@ class HypothesisTestCategorical:
             include=[np.]
         ).columns.tolist()
         if "Id" in self.numeric_cols:
+            self.numeric_cols.remove("Id") """
+
+
+class ApplyNumericTest:
+    def __init__(self, df, missingFeature="", alpha=0.05, onlyTrue=False):
+        self.useData = df.copy()
+        self.missingFeature = missingFeature
+        self.missingFeature_M = f"{missingFeature}_M"
+        self.alpha = alpha
+        self.onlyTrue = onlyTrue
+        self.numeric_cols = []
+
+    def define_groups(self):
+        self.useData[self.missingFeature_M] = self.useData[self.missingFeature].isna()
+        self.numeric_cols = self.useData.select_dtypes(
+            include=[np.number]
+        ).columns.tolist()
+        if "Id" in self.numeric_cols:
             self.numeric_cols.remove("Id")
+
+    def __split_groups(self, col):
+        missing = self.useData.loc[self.useData[self.missingFeature].isna(), col].dropna()
+        present = self.useData.loc[self.useData[self.missingFeature].notna(), col].dropna()
+        return present, missing
+
+    def __config_output(self, res):
+            res_df = pd.DataFrame(res).sort_values(by="p_value")
+            res_df["p_value"] = res_df["p_value"].round(5)
+            if self.onlyTrue:
+                res_df = res_df[res_df["evidence_MAR"]]
+            return res_df
+
+    def mann_whitney_u(self):
+        MIN_ABSOLUTE_GROUP_SIZE = 3
+        self.define_groups()
+        res = []
+        for col in self.numeric_cols:
+            present, missing = self.__split_groups(col)
+            len_present = len(present)
+            len_missing = len(missing)
+            if len_present >= MIN_ABSOLUTE_GROUP_SIZE and len_missing >= MIN_ABSOLUTE_GROUP_SIZE:
+                stat, p_value = mannwhitneyu(present, missing)
+                #for apply cohen's d
+                meanPresent = present.mean()
+                meanMissing = missing.mean()
+                std1Present = present.std(ddof=1)
+                std1Missing = missing.std(ddof=1)
+                pooled_std = np.sqrt(((len_present - 1) * std1Present ** 2 + (len_missing - 1) * std1Missing ** 2) / (len_present + len_missing - 2))
+                cohen_d = (meanPresent - meanMissing) / pooled_std if pooled_std > 0 else 0
+
+                #for apply spearmanr
+                rho, p_rho = spearmanr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
+
+                res.append(
+                    {
+                        "name_feature": col,
+                        "mann_whitney_u": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                        "cohen_d": cohen_d.round(2),
+                        "spearman_rho": rho.round(2),
+                        "spearman_p_value": p_rho.round(2),
+                    }
+                )
+        return self.__config_output(res)
