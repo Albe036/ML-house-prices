@@ -184,25 +184,31 @@ class HypothesisTestNumeric:
                 )
         return self.__config_output(res)
 
-""" class HypothesisTestCategorical:
-
-    def __init__(self, df, baseFeature, onlyTrue=False, alpha=0.05):
-        self.useData = df.copy()
-        self.baseFeature = baseFeature
-        self.baseFeature_M = f"{baseFeature}_M"
-        self.onlyTrue = onlyTrue
-        self.alpha = alpha
-        self.categorical_cols = []
-
-    def define_groups(self):
-        self.useData[self.baseFeature_M] = self.useData[self.baseFeature].isna()
-        self.numeric_cols = self.useData.select_dtypes(
-            include=['object', 'category']
-        ).columns.tolist()
-        if "Id" in self.numeric_cols:
-            self.numeric_cols.remove("Id") """
-
-
+#--------------------------------------------------------------------
+# Mann-Whitney U Test: 
+# Comparación de distribuciones entre grupos con datos no paramétricos
+# 1. Combina todos los datos
+# 2. Asigna rangos a los datos combinados
+# 3. Divide los datos en dos grupos: presentes y ausentes (por rangos)
+# 4. Calcula la estadística U de Mann-Whitney para cada grupo y escoge el menor
+# 5. Calcula el valor P
+#--------------------------------------------------------------------
+# COHEN'S: Magnitud de la diferencia entre grupos                    
+# d < 0.2   | Muy pequeña | La diferencia entre grupos es mínima     
+# 0.2 - 0.5 | Pequeña    | La diferencia entre grupos es pequeña     
+# 0.5 - 0.8 | Moderada   | La diferencia entre grupos es moderada    
+# d >= 0.8  | Grande     | La diferencia entre grupos es grande      
+#--------------------------------------------------------------------
+# SPEARMANR: Dirección de la correlación                             
+# 0.0 - 0.1 | Insignificante | Prácticamente no hay relación         
+# 0.1 - 0.3 | Débil          | Hay una ligera tendencia              
+# 0.3 - 0.6 | Moderada       | La relación es claramente perceptible 
+# 0.6 - 0.8 | Fuerte         | La relación es muy clara              
+# 0.8 - 1.0 | Muy fuerte     | Casi una relación perfecta    
+# rho= +1, correlacion perfecta positiva; a mayor valor de la feature, mas missing
+# rho= -1, correlacion perfecta negativa; a mayor valor de la feature, menos missing
+# rho= 0, sin correlacion;        
+#--------------------------------------------------------------------
 class ApplyNumericTest:
     def __init__(self, df, missingFeature="", alpha=0.05, onlyTrue=False):
         self.useData = df.copy()
@@ -241,17 +247,18 @@ class ApplyNumericTest:
             len_present = len(present)
             len_missing = len(missing)
             if len_present >= MIN_ABSOLUTE_GROUP_SIZE and len_missing >= MIN_ABSOLUTE_GROUP_SIZE:
-                stat, p_value = mannwhitneyu(present, missing)
-                #for apply cohen's d
+                stat, p_value = mannwhitneyu(present, missing, alternative='two-sided')
+                #COHEN'S D
                 meanPresent = present.mean()
                 meanMissing = missing.mean()
                 std1Present = present.std(ddof=1)
                 std1Missing = missing.std(ddof=1)
                 pooled_std = np.sqrt(((len_present - 1) * std1Present ** 2 + (len_missing - 1) * std1Missing ** 2) / (len_present + len_missing - 2))
                 cohen_d = (meanPresent - meanMissing) / pooled_std if pooled_std > 0 else 0
+                #cohen_d: Magnitud de la diferencia entre grupos
 
-                #for apply spearmanr
-                rho, p_rho = spearmanr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
+                #SPEARMANR
+                rho, p_value_rho = spearmanr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
 
                 res.append(
                     {
@@ -260,8 +267,41 @@ class ApplyNumericTest:
                         "p_value": p_value,
                         "evidence_MAR": p_value < self.alpha,
                         "cohen_d": cohen_d.round(2),
-                        "spearman_rho": rho.round(2),
-                        "spearman_p_value": p_rho.round(2),
+                        "spearman_rho": rho.round(2)
                     }
                 )
         return self.__config_output(res)
+
+    def t_student(self):
+        MIN_ABSOLUTE_GROUP_SIZE = 3
+        self.define_groups()
+        res = []
+        for col in self.numeric_cols:
+            present, missing = self.__split_groups(col)
+            len_present = len(present)
+            len_missing = len(missing)
+            if len_present > MIN_ABSOLUTE_GROUP_SIZE and len_missing > MIN_ABSOLUTE_GROUP_SIZE:
+                stat, p_value = ttest_ind(present, missing, equal_var=False)
+                #COHEN'S D
+                meanPresent = present.mean()
+                meanMissing = missing.mean()
+                std1Present = present.std(ddof=1)
+                std1Missing = missing.std(ddof=1)
+                pooled_std = np.sqrt(((len_present - 1) * std1Present ** 2 + (len_missing - 1) * std1Missing ** 2) / (len_present + len_missing - 2))
+                cohen_d = (meanPresent - meanMissing) / pooled_std if pooled_std > 0 else 0
+
+                #SPEARMANR
+                rho, p_value_rho = spearmanr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
+
+                res.append(
+                    {
+                        "name_feature": col,
+                        "t_stat": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                        "cohen_d": cohen_d.round(2),
+                        "spearman_rho": rho.round(2)
+                    }
+                )
+        return self.__config_output(res)
+
