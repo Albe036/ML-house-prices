@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from IPython.display import display
-from scipy.stats import mannwhitneyu, spearmanr, ttest_ind, ks_2samp, pointbiserialr
+from scipy.stats import mannwhitneyu, spearmanr, ttest_ind, ks_2samp, pointbiserialr, pearsonr, permutation_test
 
 useData = pd.read_csv(
     "C:\\Users\\albeiro\\Documents\\GitHub\\ML-house-prices\\data\\raw\\train.csv"
@@ -185,6 +185,10 @@ class HypothesisTestNumeric:
         return self.__config_output(res)
 
 #--------------------------------------------------------------------
+# Mann-Whitney p-value: 0.4521  → ¿Hay diferencia entre grupos?
+# Spearman p-value:    0.9823  → ¿Hay relación monótona?
+# Pearson p-value:     0.8345  → ¿Hay relación lineal?
+#--------------------------------------------------------------------
 # Mann-Whitney U Test: 
 # Comparación de distribuciones entre grupos con datos no paramétricos
 # 1. Combina todos los datos
@@ -209,6 +213,16 @@ class HypothesisTestNumeric:
 # rho= -1, correlacion perfecta negativa; a mayor valor de la feature, menos missing
 # rho= 0, sin correlacion;        
 #--------------------------------------------------------------------
+# PEARSON: Dirección y fuerza de la correlación lineal
+# 0.0 - 0.1 | Insignificante | Prácticamente no hay relación         
+# 0.1 - 0.3 | Débil          | Hay una ligera tendencia              
+# 0.3 - 0.6 | Moderada       | La relación es claramente perceptible 
+# 0.6 - 0.8 | Fuerte         | La relación es muy clara              
+# 0.8 - 1.0 | Muy fuerte     | Casi una relación perfecta    
+# r= +1, correlacion perfecta positiva; a mayor valor de la feature, mas missing
+# r= -1, correlacion perfecta negativa; a mayor valor de la feature, menos missing
+# r= 0, sin correlacion;
+#--------------------------------------------------------------------
 class ApplyNumericTest:
     def __init__(self, df, missingFeature="", alpha=0.05, onlyTrue=False):
         self.useData = df.copy()
@@ -227,9 +241,13 @@ class ApplyNumericTest:
             self.numeric_cols.remove("Id")
 
     def __split_groups(self, col):
+        MIN_ABSOLUTE_GROUP_SIZE = 3
         missing = self.useData.loc[self.useData[self.missingFeature].isna(), col].dropna()
         present = self.useData.loc[self.useData[self.missingFeature].notna(), col].dropna()
-        return present, missing
+        len_missing = len(missing)
+        len_present = len(present)
+        GREATER_THAN_THE_MINIMUM = len_present >= MIN_ABSOLUTE_GROUP_SIZE and len_missing >= MIN_ABSOLUTE_GROUP_SIZE
+        return present, missing, len_present, len_missing, GREATER_THAN_THE_MINIMUM
 
     def __config_output(self, res):
             res_df = pd.DataFrame(res).sort_values(by="p_value")
@@ -239,14 +257,11 @@ class ApplyNumericTest:
             return res_df
 
     def mann_whitney_u(self):
-        MIN_ABSOLUTE_GROUP_SIZE = 3
         self.define_groups()
         res = []
         for col in self.numeric_cols:
-            present, missing = self.__split_groups(col)
-            len_present = len(present)
-            len_missing = len(missing)
-            if len_present >= MIN_ABSOLUTE_GROUP_SIZE and len_missing >= MIN_ABSOLUTE_GROUP_SIZE:
+            present, missing, len_present, len_missing, GREATER_THAN_THE_MINIMUM = self.__split_groups(col)
+            if GREATER_THAN_THE_MINIMUM:
                 stat, p_value = mannwhitneyu(present, missing, alternative='two-sided')
                 #COHEN'S D
                 meanPresent = present.mean()
@@ -266,21 +281,19 @@ class ApplyNumericTest:
                         "mann_whitney_u": stat,
                         "p_value": p_value,
                         "evidence_MAR": p_value < self.alpha,
-                        "cohen_d": cohen_d.round(2),
-                        "spearman_rho": rho.round(2)
+                        "cohen_d": cohen_d.round(2), #Valor de la magnitud de la diferencia entre grupos
+                        "spearman_rho": rho.round(2), #Direccion de la relacion monotona
+                        "spearman_p_value": p_value_rho.round(2) #Hay relacion Monotona?
                     }
                 )
         return self.__config_output(res)
 
     def t_student(self):
-        MIN_ABSOLUTE_GROUP_SIZE = 3
         self.define_groups()
         res = []
         for col in self.numeric_cols:
-            present, missing = self.__split_groups(col)
-            len_present = len(present)
-            len_missing = len(missing)
-            if len_present > MIN_ABSOLUTE_GROUP_SIZE and len_missing > MIN_ABSOLUTE_GROUP_SIZE:
+            present, missing, len_present, len_missing, GREATER_THAN_THE_MINIMUM = self.__split_groups(col)
+            if GREATER_THAN_THE_MINIMUM:
                 stat, p_value = ttest_ind(present, missing, equal_var=False)
                 #COHEN'S D
                 meanPresent = present.mean()
@@ -290,8 +303,9 @@ class ApplyNumericTest:
                 pooled_std = np.sqrt(((len_present - 1) * std1Present ** 2 + (len_missing - 1) * std1Missing ** 2) / (len_present + len_missing - 2))
                 cohen_d = (meanPresent - meanMissing) / pooled_std if pooled_std > 0 else 0
 
-                #SPEARMANR
-                rho, p_value_rho = spearmanr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
+                #PEARSON
+                r, p_value_r = pearsonr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
+                
 
                 res.append(
                     {
@@ -300,7 +314,40 @@ class ApplyNumericTest:
                         "p_value": p_value,
                         "evidence_MAR": p_value < self.alpha,
                         "cohen_d": cohen_d.round(2),
-                        "spearman_rho": rho.round(2)
+                        "pearson_r": r.round(2), #Direccion de la relacion lineal
+                        "pearson_p_value": p_value_r.round(2) #Hay relacion lineal?
+                    }
+                )
+        return self.__config_output(res)
+
+    def permutation_test(self):
+        self.define_groups()
+        res = []
+        for col in self.numeric_cols:
+            present, missing, len_present, len_missing, GREATER_THAN_THE_MINIMUM = self.__split_groups(col)
+            if GREATER_THAN_THE_MINIMUM:
+                stat, p_value = permutation_test(present, missing, num_rounds=10000, alternative='two-sided', random_state=42)
+
+                #COHEN'S D
+                meanPresent = present.mean()
+                meanMissing = missing.mean()
+                std1Present = present.std(ddof=1)
+                std1Missing = missing.std(ddof=1)
+                pooled_std = np.sqrt(((len_present - 1) * std1Present ** 2 + (len_missing - 1) * std1Missing ** 2) / (len_present + len_missing - 2))
+                cohen_d = (meanPresent - meanMissing) / pooled_std if pooled_std > 0 else 0
+
+                #SPEARMAN'S RHO
+                rho, p_value_rho = spearmanr(self.useData[col], self.useData[self.missingFeature_M], nan_policy='omit')
+
+                res.append(
+                    {
+                        "name_feature": col,
+                        "permutation_stat": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                        "cohen_d": cohen_d.round(2),
+                        "spearman_rho": rho.round(2), #Direccion de la relacion monotona
+                        "spearman_p_value": p_value_rho.round(2) #Hay relacion monotona?
                     }
                 )
         return self.__config_output(res)
