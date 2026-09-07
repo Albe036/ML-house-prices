@@ -11,7 +11,11 @@ from scipy.stats import (
     pointbiserialr,
     pearsonr,
     permutation_test,
+    chi2_contingency,
+    power_divergence,
+    fisher_exact,
 )
+from scipy.stats.contingency import association
 
 useData = pd.read_csv(
     "C:\\Users\\albeiro\\Documents\\GitHub\\ML-house-prices\\data\\raw\\train.csv"
@@ -126,9 +130,7 @@ class ApplyNumericTest:
 
     def define_groups(self):
         self.useData[self.missingFeature_M] = self.useData[self.missingFeature].isna()
-        self.cols = self.useData.select_dtypes(
-            include=[np.number]
-        ).columns.tolist()
+        self.cols = self.useData.select_dtypes(include=[np.number]).columns.tolist()
         if "Id" in self.cols:
             self.cols.remove("Id")
 
@@ -310,7 +312,30 @@ class ApplyNumericTest:
 
 
 # --------------------------------------------------------------------
-#
+# Chi-Squared Test: Evaluación de independencia entre variables categóricas
+# 1. Construye una tabla de contingencia con las frecuencias observadas
+# 2. Calcula las frecuencias esperadas bajo la hipótesis de independencia
+# 3. Calcula la estadística Chi-cuadrado y el valor P
+# 4. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
+# --------------------------------------------------------------------
+# CRAMER'S V: Magnitud de la asociación entre variables categóricas
+# 0.0 - 0.1 | Insignificante | Prácticamente no hay relación
+# 0.1 - 0.3 | Débil          | Hay una ligera asociación
+# 0.3 - 0.6 | Moderada       | La asociación es claramente perceptible
+# 0.6 - 0.8 | Fuerte         | La asociación es muy clara
+# 0.8 - 1.0 | Muy fuerte     | Casi una asociación perfecta
+# V= +1, asociacion perfecta positiva; a mayor valor de la feature, mas missing
+# V= -1, asociacion perfecta negativa; a mayor valor de la feature, menos missing
+# V= 0, sin asociacion;
+# --------------------------------------------------------------------
+# THEIL'S U: Magnitud de la asociación entre variables categóricas
+# U = 0, sin asociacion; U = 1, asociacion perfecta
+# < 0.1 | Insignificante | Prácticamente no hay relación
+# 0.1 - 0.3 | Débil          | Hay una ligera asociación
+# 0.3 - 0.6 | Moderada       | La asociación es claramente
+# 0.6 - 0.8 | Fuerte         | La asociación es muy clara
+# 0.8 - 1.0 | Muy fuerte     | Casi una asociación
+# --------------------------------------------------------------------
 class ApplyCatetogicalTest:
     def __init__(self, useData, missingFeature, alpha=0.05, onlyTrue=True):
         self.useData = useData
@@ -322,16 +347,172 @@ class ApplyCatetogicalTest:
 
     def define_cols(self):
         self.useData[self.missingFeature_M] = self.useData[self.missingFeature].isna()
-        self.cols = self.useData.select_dtypes(include=["object", "category"]).columns.tolist()
+        self.cols = self.useData.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
         if "Id" in self.cols:
             self.cols.remove("Id")
 
-    def __create_contigency(self, col):
-        contigency = pd.crosstab(self.useData[col], self.useData[self.missingFeature_M])
-        contigency.columns = ['present', 'missing']
-        return contigency
+    def __create_contingency(self, col):
+        contingency = pd.crosstab(
+            self.useData[col], self.useData[self.missingFeature_M]
+        )
+        contingency.columns = ["present", "missing"]
+        NO_SHORTAGE_VARIANCE = contingency.shape[1] < 2
+        return contingency, NO_SHORTAGE_VARIANCE
+
+    def __config_output(self, res):
+        res_df = pd.DataFrame(res).sort_values(by="p_value")
+        res_df["p_value"] = res_df["p_value"].round(5)
+        if self.onlyTrue:
+            res_df = res_df[res_df["evidence_MAR"]]
+        return res_df
 
     def chi2_cuadrado(self):
+        res = []
         for col in self.cols:
-            contigency = self.__create_contigency(col)
-            
+            contingency, NO_SHORTAGE_VARIANCE = self.__create_contingency(col)
+            if NO_SHORTAGE_VARIANCE:
+                continue
+            chi2_stat, p_value, dof, expected = chi2_contingency(contingency.values)
+
+            # CRAMER'S
+            cramer_v = association(contingency.values, method="cramer")
+
+            # Residuos estandarizados
+            n = contingency.sum().sum()
+            row_props = contingency.sum(axis=1) / n
+            col_props = contingency.sum(axis=0) / n
+            # Residuos estandarizados
+            residuos_str = (contingency.values - expected) / np.sqrt(
+                expected
+                * (1 - row_props.values[:, None])
+                * (1 - col_props.values[None, :])
+            )
+            # Extraer residuos de la columna "Faltante" (columna 1)
+            residuos_faltante = residuos_str[:, 1]
+            # Proporcion missing por categorias
+            prop_by_cat = contingency["missing"] / contingency.sum(axis=1)
+
+            res.append(
+                {
+                    "name_feature": col,
+                    "chi2_stat": chi2_stat,
+                    "p_value": p_value,
+                    "evidence_MAR": p_value < self.alpha,
+                    "cramer_v": cramer_v.round(2),  # Magnitud de la asociacion
+                    "residuos_faltante": residuos_faltante.tolist(),
+                    "categorias": contingency.index.tolist(),
+                }
+            )
+        return self.__config_output(res)
+
+    def fisher_exact_binary_features(self):
+        res = []
+        for col in self.cols:
+            contingency, NO_SHORTAGE_VARIANCE = self.__create_contingency(col)
+            if NO_SHORTAGE_VARIANCE:
+                continue
+            # Fisher's Exact Test
+            oddsratio, p_value = fisher_exact(contingency.values)
+
+            # CRAMER'S
+            cramer_v = association(contingency.values, method="cramer")
+
+        res.append(
+            {
+                "name_feature": col,
+                "odds_ratio": oddsratio,
+                "p_value": p_value,
+                "evidence_MAR": p_value < self.alpha,
+                "cramer_v": cramer_v.round(2),  # Magnitud de la asociacion
+            }
+        )
+        return self.__config_output(res)
+
+    def g_test_likelihood_ratio(self):
+        res = []
+        for col in self.cols:
+            contingency, NO_SHORTAGE_VARIANCE = self.__create_contingency(col)
+            if NO_SHORTAGE_VARIANCE:
+                continue
+            # G-Test
+            g_stat, p_value = power_divergence(
+                contingency.values, lambda_="log-likelihood"
+            )
+
+            #Residuos estandarizados
+            chi2_stat, p_value_chi2, dof, expected = chi2_contingency(
+                contingency.values
+            )
+            n = contingency.sum().sum()
+            row_props = contingency.sum(axis=1) / n
+            col_props = contingency.sum(axis=0) / n
+
+            residuos_str = (contingency.values - expected) / np.sqrt(
+                expected
+                * (1 - row_props.values[:, None])
+                * (1 - col_props.values[None, :])
+            )
+
+            # THEIL'S U
+            theils_u_value = self.__theils_u(contingency)
+
+            # heatmap
+            self.__create_headmap(contingency, col, residuos_str, p_value_chi2)
+
+            res.append(
+                {
+                    "name_feature": col,
+                    "g_stat": g_stat,
+                    "p_value": p_value,
+                    "evidence_MAR": p_value < self.alpha,
+                    "theils_u": theils_u_value.round(2),  # Magnitud de la asociacion
+                }
+            )
+        return self.__config_output(res)
+
+    def __theils_u(self, contingency):
+        table = contingency.values
+        n = table.sum()
+
+        # Probabilidades de conjuntas y marginales
+        p_xy = table / n
+        p_x = p_xy.sum(axis=1, keepdims=True)
+        p_y = p_xy.sum(axis=0, keepdims=True)
+
+        # entropias
+        # H(x)
+        h_x = -np.sum(p_x * np.log2(p_x + 1e-10))
+        # H(y)
+        h_y = -np.sum(p_y * np.log2(p_y + 1e-10))
+        # H(x|y)
+        h_xy = -np.sum(p_xy * np.log2(p_xy + 1e-10))
+        # informacion mutua
+        mi = h_x + h_y - h_xy
+
+        if h_x == 0 and h_y == 0:
+            return 0.0
+        else:
+            return 2 * mi / (h_x + h_y)
+
+    def __create_headmap(self, contingency, col, residuos, p_value):
+        # residuos estandarizados
+        plt.figure(figsize=(10, 6))
+        sns.heatmap(
+            residuos,
+            annot=True,
+            fmt=".2f",
+            cmap="RdBu_r",
+            center=0,
+            cbar_kws={"label": "Residuos Estandarizados"},
+            xticklabels=contingency.columns,
+            yticklabels=contingency.index,
+            vmin=-3,  # Límites para mejor visualización
+            vmax=3
+        )
+        plt.title(f"Residuos Estandarizados: {self.missingFeature} vs {col}\n" f"(p-value = {p_value:.4f})")
+        plt.xlabel(f"Feature with missing values: {self.missingFeature}")
+        plt.ylabel(f"{col}")
+        plt.tight_layout()
+        plt.show()
