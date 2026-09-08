@@ -15,7 +15,12 @@ from scipy.stats import (
     power_divergence,
     fisher_exact,
     shapiro,
-    kstest
+    kstest,
+    skew,
+    kurtosis,
+    chi2,
+    normaltest,
+    anderson,
 )
 from scipy.stats.contingency import association
 
@@ -557,9 +562,11 @@ class ApplyCatetogicalTest:
         plt.ylabel(f"{col}")
         plt.tight_layout()
         plt.show()
-#---------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------
 # H0: La muestra proviene de una distribución normal
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # SHAPIRO-WILK TEST: Evaluación de normalidad de una distribución
 # 1. Calcula la estadística W de Shapiro-Wilk y el valor P
 # 2. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
@@ -567,7 +574,7 @@ class ApplyCatetogicalTest:
 # usar:
 # muestras (n < 5000)
 # Sensible a outliers y a la asimetría de la distribución
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # KOLMOGOROV-SMIRNOV TEST: Evaluación de normalidad de una distribución
 # 1. Calcula la estadística D de Kolmogorov-Smirnov y el valor P
 # 2. Evalúa la significancia estadística comparando el valor P
@@ -575,26 +582,26 @@ class ApplyCatetogicalTest:
 # 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
 # usar:
 # muestras (n <= 5000) y distribuciones continuas
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # ANDERSON-DARLING TEST: Evaluación de normalidad de una distribución
 # 1. Calcula la estadística A de Anderson-Darling y los valores críticos
 # 2. Evalúa la significancia estadística comparando la estadística A con los valores críticos
 # 3. Si la estadística A es mayor que el valor crítico correspondiente al nivel de significancia (alpha), se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
 # usar:
 # muestras (n >= 5000)
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # DAGOSTINO-PEARSON TEST: Evaluación de normalidad de una distribución
 # 1. Calcula la estadística D de D'Agostino-Pearson y el valor P
 # 2. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
 # 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
 # usar:
 # muestras (n >= 20)
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # JARQUE-BERA TEST: Evaluación de normalidad de una distribución
 # 1. Calcula la estadística JB de Jarque-Bera y el valor P
 # 2. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
 # 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 class NormalDistributionTest:
     def __init__(self, df, alpha=0.05):
         self.useData = df.copy()
@@ -605,12 +612,12 @@ class NormalDistributionTest:
         self.cols = self.useData.select_dtypes(include=[np.number]).columns.tolist()
         if "Id" in self.cols:
             self.cols.remove("Id")
-    
+
     def __config_output(self, res):
         res_df = pd.DataFrame(res).sort_values(by="p_value")
         res_df["p_value"] = res_df["p_value"].round(5)
         return res_df
-            
+
     def shapiro_wilk_test(self):
         self.define_cols()
         res = []
@@ -625,45 +632,53 @@ class NormalDistributionTest:
                     "interpretacion": "No normal" if p_value < self.alpha else "Normal",
                 }
             )
-        return __config_output(res)
+        return self.__config_output(res)
 
     def kolmogorov_smirnov(self):
         self.define_cols()
         res = []
         for col in self.cols:
-            mu, sigma = self.useData.mean(), self.useData.std()
-            stat, p_value = kstest(self.useData[col], dist='norm', args=(mu, sigma))
-            res.append({
-                "name_feature": col,
-                "ks_stat": stat,
-                "p_value": p_value,
-                "evidence_non_normality": p_value < self.alpha,
-                "interpretacion": "No normal" if p_value < self.alpha else "Normal",
-            })
+            mu, sigma = self.useData[col].mean(), self.useData[col].std()
+            stat, p_value = kstest(self.useData[col], dist="norm", args=(mu, sigma))
+            res.append(
+                {
+                    "name_feature": col,
+                    "ks_stat": stat,
+                    "p_value": p_value,
+                    "evidence_non_normality": p_value < self.alpha,
+                    "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+                }
+            )
         return self.__config_output(res)
-    
+
     def anderson_darling(self):
         self.define_cols()
         res = []
         for col in self.cols:
-            result = anderson(self.useData[col].dropna(), dist='norm')
+            result = anderson(self.useData[col].dropna(), dist="norm")
             stat = result.statistic
             critical_values = result.critical_values
             significance_level = result.significance_level
 
-            idx_05 = list(significance_level).index(5.0)  # Nivel de significancia del 5%
-            normal = (stat < critical_values[idx_05])
-            evidence_non_normality = (stat > critical_values[idx_05])  # Usando el nivel de significancia del 5%
+            idx_05 = list(significance_level).index(
+                5.0
+            )  # Nivel de significancia del 5%
+            normal = stat < critical_values[idx_05]
+            evidence_non_normality = (
+                stat > critical_values[idx_05]
+            )  # Usando el nivel de significancia del 5%
 
-            res.append({
-                "name_feature": col,
-                "ad_stat": stat,
-                "critical_value_95": critical_values[idx_05],
-                "normal": normal,
-                "interpretacion": "No normal" if not normal else "Normal",
-                "critical_values": dict(zip(significance_level, critical_values)),
-                "evidence_non_normality": evidence_non_normality,
-            })
+            res.append(
+                {
+                    "name_feature": col,
+                    "ad_stat": stat,
+                    "critical_value_95": critical_values[idx_05],
+                    "normal": normal,
+                    "interpretacion": "No normal" if not normal else "Normal",
+                    "critical_values": dict(zip(significance_level, critical_values)),
+                    "evidence_non_normality": evidence_non_normality,
+                }
+            )
         return self.__config_output(res)
 
     def dagostino_pearson(self):
@@ -671,32 +686,38 @@ class NormalDistributionTest:
         res = []
         for col in self.cols:
             stat, p_value = normaltest(self.useData[col].dropna())
-            res.append({
-                "name_feature": col,
-                "dagostino_stat": stat,
-                "p_value": p_value,
-                "evidence_non_normality": p_value < self.alpha,
-                "interpretacion": "No normal" if p_value < self.alpha else "Normal",
-            })
+            res.append(
+                {
+                    "name_feature": col,
+                    "dagostino_stat": stat,
+                    "p_value": p_value,
+                    "evidence_non_normality": p_value < self.alpha,
+                    "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+                }
+            )
         return self.__config_output(res)
-    
+
     def jarque_bera(self):
         self.define_cols()
         res = []
         for col in self.cols:
             n = len(self.useData[col].dropna())
             skewness = skew(self.useData[col].dropna())
-            kurtosis = kurtosis(self.useData[col].dropna(), fisher=True)
+            kurtosiss = kurtosis(self.useData[col].dropna(), fisher=True)
 
-            jb_stat = (n / 6) * (skewness**2 + (kurtosis**2) / 4)
+            jb_stat = (n / 6) * (skewness**2 + (kurtosiss**2) / 4)
             p_value = 1 - chi2.cdf(jb_stat, df=2)
             normal = p_value >= self.alpha
-            res.append({
-                "name_feature": col,
-                "jb_stat": jb_stat,
-                "p_value": p_value,
-                "normal": normal,
-                "evidence_non_normality": p_value < self.alpha,
-                "interpretacion": "No normal" if p_value < self.alpha else "Normal",
-            })
+            res.append(
+                {
+                    "name_feature": col,
+                    "jb_stat": jb_stat,
+                    "p_value": p_value,
+                    "skewness": skewness,
+                    "kurtosis": kurtosiss,
+                    "normal": normal,
+                    "evidence_non_normality": p_value < self.alpha,
+                    "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+                }
+            )
         return self.__config_output(res)
