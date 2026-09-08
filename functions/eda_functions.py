@@ -14,6 +14,8 @@ from scipy.stats import (
     chi2_contingency,
     power_divergence,
     fisher_exact,
+    shapiro,
+    kstest
 )
 from scipy.stats.contingency import association
 
@@ -318,6 +320,18 @@ class ApplyNumericTest:
 # 3. Calcula la estadística Chi-cuadrado y el valor P
 # 4. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
 # --------------------------------------------------------------------
+# G Test: Evaluación de independencia entre variables categóricas
+# 1. Construye una tabla de contingencia con las frecuencias observadas
+# 2. Calcula las frecuencias esperadas bajo la hipótesis de independencia
+# 3. Calcula la estadística G y el valor P
+# 4. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
+# --------------------------------------------------------------------
+# Fisher's Exact Test: Evaluación de independencia entre variables categóricas (2x2)
+# 1. Construye una tabla de contingencia 2x2 con las frecuencias observadas
+# 2. Calcula la probabilidad exacta de obtener la tabla observada
+#    bajo la hipótesis de independencia
+# 3. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
+# --------------------------------------------------------------------
 # CRAMER'S V: Magnitud de la asociación entre variables categóricas
 # 0.0 - 0.1 | Insignificante | Prácticamente no hay relación
 # 0.1 - 0.3 | Débil          | Hay una ligera asociación
@@ -335,6 +349,14 @@ class ApplyNumericTest:
 # 0.3 - 0.6 | Moderada       | La asociación es claramente
 # 0.6 - 0.8 | Fuerte         | La asociación es muy clara
 # 0.8 - 1.0 | Muy fuerte     | Casi una asociación
+# --------------------------------------------------------------------
+# ODDS RATIO: Magnitud de la asociación entre variables categóricas (2x2)
+# OR = 1, sin asociacion; OR > 1, asociacion positiva; OR < 1, asociacion negativa
+# 0.0 - 1.0 | Negativa       | A mayor valor de la feature, menos missing
+# 1.0 - 1.5 | Débil          | Hay una ligera asociación
+# 1.5 - 3.0 | Moderada       | La asociación es claramente perceptible
+# 3.0 - 5.0 | Fuerte         | La asociación es muy clara
+# 5.0 - 10.0 | Muy fuerte     | Casi una asociación perfecta
 # --------------------------------------------------------------------
 class ApplyCatetogicalTest:
     def __init__(self, useData, missingFeature, alpha=0.05, onlyTrue=True):
@@ -407,17 +429,31 @@ class ApplyCatetogicalTest:
             )
         return self.__config_output(res)
 
-    def fisher_exact_binary_features(self):
+    def fisher_exact(self):
         res = []
         for col in self.cols:
             contingency, NO_SHORTAGE_VARIANCE = self.__create_contingency(col)
-            if NO_SHORTAGE_VARIANCE:
+            # check variance or if contingency is not 2x2
+            if NO_SHORTAGE_VARIANCE or contingency.shape != (2, 2):
                 continue
             # Fisher's Exact Test
             oddsratio, p_value = fisher_exact(contingency.values)
 
-            # CRAMER'S
-            cramer_v = association(contingency.values, method="cramer")
+            # IC 95% para el odds ratio
+            a, b = contingency.values[0, 0], contingency.values[0, 1]
+            c, d = contingency.values[1, 0], contingency.values[1, 1]
+            if b == 0 or c == 0:
+                # Si b o c son cero, el odds ratio es infinito o cero, y no podemos calcular un IC
+                a += 0.5
+                b += 0.5
+                c += 0.5
+                d += 0.5
+            log_or = np.log(oddsratio)
+            se_log_or = np.sqrt(1 / a + 1 / b + 1 / c + 1 / d)
+            z = 1.96  # para un IC del 95%
+            ic_lower = np.exp(log_or - z * se_log_or)
+            ic_upper = np.exp(log_or + z * se_log_or)
+            ic_incluye_1 = ic_lower <= 1 <= ic_upper
 
         res.append(
             {
@@ -425,12 +461,14 @@ class ApplyCatetogicalTest:
                 "odds_ratio": oddsratio,
                 "p_value": p_value,
                 "evidence_MAR": p_value < self.alpha,
-                "cramer_v": cramer_v.round(2),  # Magnitud de la asociacion
+                "ic_95_lower": round(ic_lower, 3),
+                "ic_95_upper": round(ic_upper, 3),
+                "ic_incluye_1": ic_incluye_1,
             }
         )
         return self.__config_output(res)
 
-    def g_test_likelihood_ratio(self):
+    def g_test(self):
         res = []
         for col in self.cols:
             contingency, NO_SHORTAGE_VARIANCE = self.__create_contingency(col)
@@ -441,7 +479,7 @@ class ApplyCatetogicalTest:
                 contingency.values, lambda_="log-likelihood"
             )
 
-            #Residuos estandarizados
+            # Residuos estandarizados
             chi2_stat, p_value_chi2, dof, expected = chi2_contingency(
                 contingency.values
             )
@@ -509,10 +547,156 @@ class ApplyCatetogicalTest:
             xticklabels=contingency.columns,
             yticklabels=contingency.index,
             vmin=-3,  # Límites para mejor visualización
-            vmax=3
+            vmax=3,
         )
-        plt.title(f"Residuos Estandarizados: {self.missingFeature} vs {col}\n" f"(p-value = {p_value:.4f})")
+        plt.title(
+            f"Residuos Estandarizados: {self.missingFeature} vs {col}\n"
+            f"(p-value = {p_value:.4f})"
+        )
         plt.xlabel(f"Feature with missing values: {self.missingFeature}")
         plt.ylabel(f"{col}")
         plt.tight_layout()
         plt.show()
+#---------------------------------------------------------------------
+# H0: La muestra proviene de una distribución normal
+#---------------------------------------------------------------------
+# SHAPIRO-WILK TEST: Evaluación de normalidad de una distribución
+# 1. Calcula la estadística W de Shapiro-Wilk y el valor P
+# 2. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
+# 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
+# usar:
+# muestras (n < 5000)
+# Sensible a outliers y a la asimetría de la distribución
+#---------------------------------------------------------------------
+# KOLMOGOROV-SMIRNOV TEST: Evaluación de normalidad de una distribución
+# 1. Calcula la estadística D de Kolmogorov-Smirnov y el valor P
+# 2. Evalúa la significancia estadística comparando el valor P
+#    con el nivel de significancia (alpha)
+# 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
+# usar:
+# muestras (n <= 5000) y distribuciones continuas
+#---------------------------------------------------------------------
+# ANDERSON-DARLING TEST: Evaluación de normalidad de una distribución
+# 1. Calcula la estadística A de Anderson-Darling y los valores críticos
+# 2. Evalúa la significancia estadística comparando la estadística A con los valores críticos
+# 3. Si la estadística A es mayor que el valor crítico correspondiente al nivel de significancia (alpha), se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
+# usar:
+# muestras (n >= 5000)
+#---------------------------------------------------------------------
+# DAGOSTINO-PEARSON TEST: Evaluación de normalidad de una distribución
+# 1. Calcula la estadística D de D'Agostino-Pearson y el valor P
+# 2. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
+# 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
+# usar:
+# muestras (n >= 20)
+#---------------------------------------------------------------------
+# JARQUE-BERA TEST: Evaluación de normalidad de una distribución
+# 1. Calcula la estadística JB de Jarque-Bera y el valor P
+# 2. Evalúa la significancia estadística comparando el valor P con el nivel de significancia (alpha)
+# 3. Si el valor P es menor que alpha, se rechaza la hipótesis nula de normalidad, indicando que la distribución no es normal.
+#---------------------------------------------------------------------
+class NormalDistributionTest:
+    def __init__(self, df, alpha=0.05):
+        self.useData = df.copy()
+        self.alpha = alpha
+        self.cols = []
+
+    def define_cols(self):
+        self.cols = self.useData.select_dtypes(include=[np.number]).columns.tolist()
+        if "Id" in self.cols:
+            self.cols.remove("Id")
+    
+    def __config_output(self, res):
+        res_df = pd.DataFrame(res).sort_values(by="p_value")
+        res_df["p_value"] = res_df["p_value"].round(5)
+        return res_df
+            
+    def shapiro_wilk_test(self):
+        self.define_cols()
+        res = []
+        for col in self.cols:
+            stat, p_value = shapiro(self.useData[col].dropna())
+            res.append(
+                {
+                    "name_feature": col,
+                    "shapiro_stat": stat,
+                    "p_value": p_value,
+                    "evidence_non_normality": p_value < self.alpha,
+                    "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+                }
+            )
+        return __config_output(res)
+
+    def kolmogorov_smirnov(self):
+        self.define_cols()
+        res = []
+        for col in self.cols:
+            mu, sigma = self.useData.mean(), self.useData.std()
+            stat, p_value = kstest(self.useData[col], dist='norm', args=(mu, sigma))
+            res.append({
+                "name_feature": col,
+                "ks_stat": stat,
+                "p_value": p_value,
+                "evidence_non_normality": p_value < self.alpha,
+                "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+            })
+        return self.__config_output(res)
+    
+    def anderson_darling(self):
+        self.define_cols()
+        res = []
+        for col in self.cols:
+            result = anderson(self.useData[col].dropna(), dist='norm')
+            stat = result.statistic
+            critical_values = result.critical_values
+            significance_level = result.significance_level
+
+            idx_05 = list(significance_level).index(5.0)  # Nivel de significancia del 5%
+            normal = (stat < critical_values[idx_05])
+            evidence_non_normality = (stat > critical_values[idx_05])  # Usando el nivel de significancia del 5%
+
+            res.append({
+                "name_feature": col,
+                "ad_stat": stat,
+                "critical_value_95": critical_values[idx_05],
+                "normal": normal,
+                "interpretacion": "No normal" if not normal else "Normal",
+                "critical_values": dict(zip(significance_level, critical_values)),
+                "evidence_non_normality": evidence_non_normality,
+            })
+        return self.__config_output(res)
+
+    def dagostino_pearson(self):
+        self.define_cols()
+        res = []
+        for col in self.cols:
+            stat, p_value = normaltest(self.useData[col].dropna())
+            res.append({
+                "name_feature": col,
+                "dagostino_stat": stat,
+                "p_value": p_value,
+                "evidence_non_normality": p_value < self.alpha,
+                "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+            })
+        return self.__config_output(res)
+    
+    def jarque_bera(self):
+        self.define_cols()
+        res = []
+        for col in self.cols:
+            n = len(self.useData[col].dropna())
+            skewness = skew(self.useData[col].dropna())
+            kurtosis = kurtosis(self.useData[col].dropna(), fisher=True)
+
+            jb_stat = (n / 6) * (skewness**2 + (kurtosis**2) / 4)
+            p_value = 1 - chi2.cdf(jb_stat, df=2)
+            normal = p_value >= self.alpha
+            res.append({
+                "name_feature": col,
+                "jb_stat": jb_stat,
+                "p_value": p_value,
+                "normal": normal,
+                "evidence_non_normality": p_value < self.alpha,
+                "interpretacion": "No normal" if p_value < self.alpha else "Normal",
+            })
+        return self.__config_output(res)
