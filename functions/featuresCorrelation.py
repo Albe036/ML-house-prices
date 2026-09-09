@@ -8,7 +8,7 @@ import os
 df = pd.read_csv("./data/raw/train.csv")
 
 
-class DataFrame_handling:
+class FeaturesHandling:
     def __init__(self, dataFrame, alpha=0.05):
         self.dataFrame = dataFrame
         self.alpha = alpha
@@ -61,18 +61,17 @@ class DataFrame_handling:
 # r > 0.5 → moderate
 # r < 0.3 → low
 # ****************************************************************************************
-class Features_correlations_pearson(DataFrame_handling):
+class Features_correlations_pearson(FeaturesHandling):
     def pearson_correlation(self, featureAnalyze=""):
         # H_0 = No hay correlación entre featureAnalyze y las demás características numéricas
         # H_1 = Existe correlación entre featureAnalyze y al menos una de las demás características numéricas
         numeric_features = super()._filter_features(type="numeric")
-        if featureAnalyze not in numeric_features.columns.tolist():
-            raise ValueError(
-                "feature must be numeric and present in the DataFrame"
-            )
-        cols = numeric_features.columns.tolist().remove(featureAnalyze)
+        cols = numeric_features.columns.tolist()
+        if featureAnalyze not in cols:
+            raise ValueError("feature must be numeric and present in the DataFrame")
+        cols = cols.remove(featureAnalyze)
         res = []
-        for col in numeric_features:
+        for col in cols:
             pearson_stat, p_value = pearsonr(
                 numeric_features[featureAnalyze], numeric_features[col]
             )
@@ -86,7 +85,9 @@ class Features_correlations_pearson(DataFrame_handling):
             )
         return super()._config_output(res)
 
-    def pearson_correlation_one_to_one(self, featureAnalyze, featureCorrelation, with_plot=True):
+    def pearson_correlation_one_to_one(
+        self, featureAnalyze, featureCorrelation, with_plot=True
+    ):
         # H_0: No hay correlación entre featureAnalyze y featureCorrelation
         # H_1: Existe correlación entre featureAnalyze y featureCorrelation
         numeric_features = super()._filter_features(type="numeric")
@@ -129,7 +130,7 @@ class Features_correlations_pearson(DataFrame_handling):
         if interpret:
             return matrix.apply(lambda x: x.apply(self.__interpret_pearson_value))
         return matrix
-        #sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+        # sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
 
     def __interpret_pearson_value(self, r):
         r_abs = abs(r)
@@ -147,31 +148,37 @@ class Features_correlations_pearson(DataFrame_handling):
             return "Insignificant"
         else:
             return "Moderate"
+
+
 # ****************************************************************************************
-# Spearman Correlation 
+# Spearman Correlation
 # El coeficiente de correlación de Spearman (ρ - rho) mide la relación monótona entre dos variables.
 #  - Monótona significa que cuando una variable aumenta, la otra siempre aumenta o siempre disminuye,
 #    pero no necesariamente a ritmo constante.
 #  - Es un método no paramétrico porque trabaja con los rangos (orden) de los valores, no con los valores brutos.
 # -------------------------------------------------
+# Coeficiente de correlacion:
 # +1: Correlación monótona perfecta positiva (cuando una sube, la otra siempre sube)
 # -1: Correlación monótona perfecta negativa (cuando una sube, la otra siempre baja)
 #  0: Ausencia de relación monótona (no significa independencia, como veremos)
 # -------------------------------------------------
-
+# Cuanto usar spearman:
+# - Relaciones no lineales pero monótonas:
+# - Datos con outliers extremos: Al usar rangos, los outliers pierden su efecto distorsionador.
+# - Variables ordinales: Cuando tienes escalas como "bajo", "medio", "alto" codificadas como 1, 2, 3.
+# - Los datos NO siguen una distribución normal: Spearman no asume normalidad.
 # ****************************************************************************************
-class Features_correlations_spearman(DataFrame_handling):
+class Features_correlations_spearman(FeaturesHandling):
     def spearman_correlation(self, featureAnalyze):
         # H_0 = No hay correlación entre featureAnalyze y las demás características numéricas
         # H_1 = Existe correlación entre featureAnalyze y al menos una de las demás características numéricas
         numeric_features = super()._filter_features(type="numeric")
-        if featureAnalyze not in numeric_features.columns.tolist():
-            raise ValueError(
-                "feature must be numeric and present in the DataFrame"
-            )
-        cols = numeric_features.columns.tolist().remove(featureAnalyze)
+        cols = numeric_features.columns.tolist()
+        if featureAnalyze not in cols:
+            raise ValueError("feature must be numeric and present in the DataFrame")
+        cols = cols.remove(featureAnalyze)
         res = []
-        for col in numeric_features:
+        for col in cols:
             spearman_stat, p_value = spearmanr(
                 numeric_features[featureAnalyze], numeric_features[col]
             )
@@ -185,7 +192,9 @@ class Features_correlations_spearman(DataFrame_handling):
             )
         return super()._config_output(res)
 
-    def spearman_correlation_one_to_one(self, featureAnalyze, featureCorrelation, with_plot=True):
+    def spearman_correlation_one_to_one(
+        self, featureAnalyze, featureCorrelation, with_plot=True
+    ):
         # H_0: No hay correlación entre featureAnalyze y featureCorrelation
         # H_1: Existe correlación entre featureAnalyze y featureCorrelation
         numeric_features = super()._filter_features(type="numeric")
@@ -219,17 +228,18 @@ class Features_correlations_spearman(DataFrame_handling):
                 }
             ]
         )
-    def calculate_pearson_matrix(self, custom_features=[], interpret=False):
+
+    def calculate_spearman_matrix(self, custom_features=[], interpret=False):
         numeric_features = super()._filter_features(
             type="numeric", custom_features=custom_features
         )
         matrix = numeric_features.corr(method="spearman").round(2)
         if interpret:
-            return matrix.apply(lambda x: x.apply(self.__interpret_pearson_value))
+            return matrix.apply(lambda x: x.apply(self.__interpret_spearman_value))
         return matrix
-        #sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+        # sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
 
-    def __interpret_pearson_value(self, r):
+    def __interpret_spearman_value(self, r):
         r_abs = abs(r)
         if r_abs == 1:
             return "--"
@@ -243,3 +253,57 @@ class Features_correlations_spearman(DataFrame_handling):
             return "Low"
         else:
             return "Insignificant"
+
+
+class Features_correlations_cramers_v:
+    def calculate_cramers_v(self, featureAnalyze):
+        categorical_cols = super()._filter_features(type="categorical")
+        cols = categorical_cols.columns.tolist()
+        if featureAnalyze not in cols:
+            raise ValueError(
+                "featureAnalyze must be categorical and present in the DataFrame"
+            )
+        res = []
+        cols = cols.remove(featureAnalyze)
+        for col in cols:
+            pass
+
+
+
+
+class FeaturesCorrelations(FeaturesHandling, Features_correlations_pearson, Features_correlations_spearman):
+    def difference_between_pearson_and_spearman(self, featureAnalyze):
+        numeric_cols = super()._filter_features(type="numeric")
+        cols = numeric_cols.columns.tolist()
+        if featureAnalyze not in cols:
+            raise ValueError(
+                "featureAnalyze must be numeric and present in the DataFrame"
+            )
+        res = []
+        for col in cols:
+            pearson_stat, p_value_pearson = pearsonr(
+                numeric_cols[featureAnalyze], numeric_cols[col]
+            )
+            spearman_stat, p_value_spearman = spearmanr(
+                numeric_cols[featureAnalyze], numeric_cols[col]
+            )
+            difference = abs(pearson_stat - spearman_stat)
+            # difference > 0.2
+            # ALERTA: Diferencia significativa entre Pearson y Spearman.
+            # Esto indica que la relación NO es estrictamente lineal.
+            # Spearman es mas fiable para esta prueba.
+            # difference <= 0.2
+            # Pearson y Spearman son consistentes.
+            # La relación es aproximadamente lineal.
+            res.append(
+                {
+                    "featureAnalyze": featureAnalyze,
+                    "featureCorrelation": col,
+                    "pearson_stat": pearson_stat,
+                    "p_value_pearson": p_value_pearson,
+                    "spearman_stat": spearman_stat,
+                    "p_value_spearman": p_value_spearman,
+                    "difference": difference,
+                }
+            )
+        return super()._config_output(res)
