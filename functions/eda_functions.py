@@ -24,10 +24,6 @@ from scipy.stats import (
 )
 from scipy.stats.contingency import association
 
-useData = pd.read_csv(
-    "C:\\Users\\albeiro\\Documents\\GitHub\\ML-house-prices\\data\\raw\\train.csv"
-)
-
 
 def list_missing_values(df):
     df_train = df.copy()
@@ -99,6 +95,12 @@ def test_mcar(df, variable_con_nulos, target_var="SalePrice"):
 # 3. Divide los datos en dos grupos: presentes y ausentes (por rangos)
 # 4. Calcula la estadística U de Mann-Whitney para cada grupo y escoge el menor
 # 5. Calcula el valor P
+# --------------------------------------------------------------------
+# Kolmogorov-Smirnov: Comparación de distribuciones entre dos grupos, sensible a diferencias en forma y dispersión
+# --------------------------------------------------------------------
+# T-student: Comparación de medias entre dos grupos, asume normalidad y varianzas iguales
+# --------------------------------------------------------------------
+# Permutation Test: Comparación de medias entre dos grupos mediante reordenamiento aleatorio de los datos, no asume normalidad
 # --------------------------------------------------------------------
 # COHEN'S: Magnitud de la diferencia entre grupos
 # d < 0.2   | Muy pequeña | La diferencia entre grupos es mínima
@@ -214,6 +216,52 @@ class ApplyNumericTest:
                         ),  # Hay relacion Monotona?
                     }
                 )
+        return self.__config_output(res)
+    
+    def kolmogorov_smirnov(self):
+        self.define_groups()
+        res = []
+        for col in self.cols:
+            present, missing, len_present, len_missing, GREATER_THAN_THE_MINIMUM = (
+                self.__split_groups(col)
+            )
+            
+
+            if GREATER_THAN_THE_MINIMUM:
+                stat, p_value = ks_2samp(present, missing)
+                #COHEN'S D
+                meanPresent = present.mean()
+                meanMissing = missing.mean()
+                std1Present = present.std(ddof=1)
+                std1Missing = missing.std(ddof=1)
+                pooled_std = np.sqrt(
+                    (
+                        (len_present - 1) * std1Present**2
+                        + (len_missing - 1) * std1Missing**2
+                    )
+                    / (len_present + len_missing - 2)
+                )
+                cohen_d = (
+                    (meanPresent - meanMissing) / pooled_std if pooled_std > 0 else 0
+                )
+                #SPEARMAN
+                rho, p_value_rho = spearmanr(
+                    self.useData[col],
+                    self.useData[self.missingFeature_M],
+                    nan_policy="omit",
+                )
+                res.append(
+                    {
+                        "name_feature": col,
+                        "ks_stat": stat,
+                        "p_value": p_value,
+                        "evidence_MAR": p_value < self.alpha,
+                        "cohen_d": cohen_d.round(2),
+                        "spearman_rho": rho.round(2),
+                        "spearman_p_value": p_value_rho.round(2),
+                    }
+                )
+                
         return self.__config_output(res)
 
     def t_student(self):
@@ -607,8 +655,9 @@ class NormalDistributionTest:
         self.useData = df.copy()
         self.alpha = alpha
         self.cols = []
+        self.define_cols()
 
-    def define_cols(self):
+    def define_cols(self, custom_cols = []):
         self.cols = self.useData.select_dtypes(include=[np.number]).columns.tolist()
         if "Id" in self.cols:
             self.cols.remove("Id")
@@ -617,11 +666,20 @@ class NormalDistributionTest:
         res_df = pd.DataFrame(res).sort_values(by="p_value")
         res_df["p_value"] = res_df["p_value"].round(5)
         return res_df
+    
+    def checkCustomCols(self, custom_cols=[]):
+        if len(custom_cols) == 0:
+            return self.cols
+        else:
+            result = all(e in self.cols for e in custom_cols)
+            if result:
+                return custom_cols
+        return self.cols
 
-    def shapiro_wilk_test(self):
-        self.define_cols()
+    def shapiro_wilk_test(self, custom_cols = []):
         res = []
-        for col in self.cols:
+        list_cols = self.checkCustomCols(custom_cols)
+        for col in list_cols:
             stat, p_value = shapiro(self.useData[col].dropna())
             res.append(
                 {
@@ -634,10 +692,10 @@ class NormalDistributionTest:
             )
         return self.__config_output(res)
 
-    def kolmogorov_smirnov(self):
-        self.define_cols()
+    def kolmogorov_smirnov(self, custom_cols = []):
         res = []
-        for col in self.cols:
+        list_cols = self.checkCustomCols(custom_cols)
+        for col in list_cols:
             mu, sigma = self.useData[col].mean(), self.useData[col].std()
             stat, p_value = kstest(self.useData[col], dist="norm", args=(mu, sigma))
             res.append(
@@ -651,10 +709,10 @@ class NormalDistributionTest:
             )
         return self.__config_output(res)
 
-    def anderson_darling(self):
-        self.define_cols()
+    def anderson_darling(self, custom_cols = []):
         res = []
-        for col in self.cols:
+        list_cols = self.checkCustomCols(custom_cols)
+        for col in list_cols:
             result = anderson(self.useData[col].dropna(), dist="norm")
             stat = result.statistic
             critical_values = result.critical_values
@@ -681,10 +739,10 @@ class NormalDistributionTest:
             )
         return self.__config_output(res)
 
-    def dagostino_pearson(self):
-        self.define_cols()
+    def dagostino_pearson(self, custom_cols = []):
         res = []
-        for col in self.cols:
+        list_cols = self.checkCustomCols(custom_cols)
+        for col in list_cols:
             stat, p_value = normaltest(self.useData[col].dropna())
             res.append(
                 {
@@ -697,10 +755,10 @@ class NormalDistributionTest:
             )
         return self.__config_output(res)
 
-    def jarque_bera(self):
-        self.define_cols()
+    def jarque_bera(self, custom_cols = []):
         res = []
-        for col in self.cols:
+        list_cols = self.checkCustomCols(custom_cols)
+        for col in list_cols:
             n = len(self.useData[col].dropna())
             skewness = skew(self.useData[col].dropna())
             kurtosiss = kurtosis(self.useData[col].dropna(), fisher=True)
