@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy.stats import spearmanr, pearsonr
+from scipy.stats import spearmanr, pearsonr, chi2_contingency, association
 import os
 
 df = pd.read_csv("./data/raw/train.csv")
@@ -255,6 +255,15 @@ class Features_correlations_spearman(FeaturesHandling):
             return "Insignificant"
 
 
+# ****************************************************************************************
+# Cramer's V:
+# Cramér's V mide la fuerza de asociación entre dos variables categóricas.
+# -------------------------------------------------
+# Se basa en la prueba chi-cuadrado (χ²)
+# Valores de 0 a 1 (NO negativos)
+# 0: Independencia total (no hay relación)
+# 1: Dependencia perfecta (una variable determina completamente a la otra)
+# ****************************************************************************************
 class Features_correlations_cramers_v:
     def calculate_cramers_v(self, featureAnalyze):
         categorical_cols = super()._filter_features(type="categorical")
@@ -264,14 +273,65 @@ class Features_correlations_cramers_v:
                 "featureAnalyze must be categorical and present in the DataFrame"
             )
         res = []
-        cols = cols.remove(featureAnalyze)
+        cols.remove(featureAnalyze)
         for col in cols:
-            pass
+            # Tabla de contingencia (frecuencias observadas)
+            contingeny_table = pd.crosstab(
+                categorical_cols[featureAnalyze], categorical_cols[col]
+            )
+            # Prueba de chi-cuadrado (χ²)
+            chi2, p, dof, expected = chi2_contingency(contingeny_table)
+            # Numero total de observaciones
+            n = contingeny_table.sum().sum()
+
+            # Calcular Cramér's V
+            cramers_v = association(contingeny_table, method="cramer")
+            res.append(
+                {
+                    "featureAnalyze": featureAnalyze,
+                    "featureCorrelation": col,
+                    "chi2": chi2,
+                    "p_value": p,
+                    "dof": dof,
+                    "expected": expected,
+                    "n": n,
+                    "cramers_v": cramers_v,
+                }
+            )
+        return super()._config_output(res)
+
+    def cramers_correlation_one_to_one(
+        self, featureAnalyze, featureCorrelation, with_plot=False
+    ):
+        # H_0: No hay asociación entre featureAnalyze y featureCorrelation (Cramér's V = 0)
+        # H_1: Existe asociación entre featureAnalyze y featureCorrelation (Cramér's V > 0)
+        categorical_cols = super()._filter_features(type="categorical")
+        cols = categorical_cols.columns.tolist()
+        if featureAnalyze not in cols or featureCorrelation not in cols:
+            raise ValueError(
+                "Both featureAnalyze and featureCorrelation must be categorical and present in the DataFrame"
+            )
+        #Creacion de la tabla de contingencia
+        contingency_table = pd.crosstab(
+            categorical_cols[featureAnalyze], categorical_cols[featureCorrelation]
+        )
+        # Prueba de chi-cuadrado (χ²) para la tabla de contingencia
+        chi2, p, dof, expected = chi2_contingency(contingency_table)
+        cramers_v = association(contingency_table, method="cramer")
+        if with_plot:
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+
+            sns.heatmap(contingency_table, annot=True, fmt="d", cmap="YlGnBu")
+            plt.title(f"Cramér's V: {cramers_v:.2f}")
+            plt.show()
+
+        return cramers_v
 
 
-
-
-class FeaturesCorrelations(FeaturesHandling, Features_correlations_pearson, Features_correlations_spearman):
+class FeaturesCorrelations(
+    FeaturesHandling, Features_correlations_pearson, Features_correlations_spearman
+):
     def difference_between_pearson_and_spearman(self, featureAnalyze):
         numeric_cols = super()._filter_features(type="numeric")
         cols = numeric_cols.columns.tolist()
