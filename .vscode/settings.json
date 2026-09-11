@@ -1,7 +1,7 @@
 {
     "editor.fontFamily": "'GoogleSansCode Nerd Font','JetBrainsMono Nerd Font','CommitMono Nerd Font', 'iMWritingDuo Nerd Font'",
-    "editor.fontSize": 17,
-    "editor.letterSpacing": -1,
+    "editor.fontSize": 17.5,
+    "editor.letterSpacing": -1.5,
     "python.testing.pytestArgs": [
         "notebooks"
     ],
