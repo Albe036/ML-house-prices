@@ -136,7 +136,7 @@ class ApplyNumericTest:
         self.alpha = alpha
         self.onlyTrue = onlyTrue
         self.cols = []
-
+    
     def define_groups(self):
         self.useData[self.missingFeature_M] = self.useData[self.missingFeature].isna()
         self.cols = self.useData.select_dtypes(include=[np.number]).columns.tolist()
