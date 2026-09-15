@@ -3,10 +3,9 @@ import pandas as pd
 
 
 class MissingHandling:
-    def __init__(self, dataFrame, alpha=0.05, onlyTrue=True):
+    def __init__(self, dataFrame, alpha=0.05):
         self.dataFrame = dataFrame
         self.alpha = alpha
-        self.onlyTrue = onlyTrue
 
     def _define_missing_feature(self, missing_feature=""):
         # Define new feature missing: True and present: False
@@ -67,19 +66,16 @@ class MissingHandling:
             return None, None, False
         return missing, present, GREAT_ENOUGH
 
-    def _config_output(self, res, desc=False):
+    def _config_output(self, res, desc=False, onlyTrue=True):
         for property in res:
             for key, value in property.items():
                 if isinstance(value, float):
                     property[key] = round(value, 5)
         res_df = pd.DataFrame(res).sort_values(by="p_value")
-        if self.onlyTrue:
+        if onlyTrue:
             res_df = res_df[res_df["evidence_MAR"]]
-        if desc:
-            res_df["p_value_interpretation"] = res_df["p_value"].apply(
-                lambda x: self._interpretate_p_value(x)
-            )
-        return res_df
+            res_df.drop(columns=["evidence_MAR"], inplace=True)
+        return res_df.reset_index(drop=True)
 
     def _interpretate_p_value(self, p_value):
         if p_value == 0:

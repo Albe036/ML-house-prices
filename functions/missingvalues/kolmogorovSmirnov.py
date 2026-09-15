@@ -1,16 +1,15 @@
 from functions.missingvalues.missingHandling import MissingHandling
-from scipy.stats import mannwhitneyu, spearmanr
+from scipy.stats import ks_2samp, spearmanr
 import numpy as np
 
 """ 
 --------------------------------------------------------------------
-Mann-Whitney U Test:
+Kolmogorov-Smirnov Test:
 Comparación de distribuciones entre grupos con datos no paramétricos
 1. Combina todos los datos
-2. Asigna rangos a los datos combinados
-3. Divide los datos en dos grupos: presentes y ausentes (por rangos)
-4. Calcula la estadística U de Mann-Whitney para cada grupo y escoge el menor
-5. Calcula el valor P
+2. Calcula la función de distribución empírica (ECDF) para cada grupo
+3. Calcula la estadística D de Kolmogorov-Smirnov, que es la máxima diferencia entre las ECDFs
+4. Calcula el valor P
 --------------------------------------------------------------------
 Cohen's d test:
 Cohen's d es una medida de tamaño del efecto que cuantifica cuánta diferencia
@@ -44,7 +43,7 @@ Dirrecion (Correlacion):
 """
 
 
-class MannWhitneyU(MissingHandling):
+class KolmogorovSmirnov(MissingHandling):
     # def __init__(self, dataFrame, alpha=0.05):
     def all_features(
         self, custom_features=[], missing_feature="", desc=False, onlyTrue=True
@@ -63,7 +62,7 @@ class MannWhitneyU(MissingHandling):
                 reference_feature=col,
             )
             if GREAT_ENOUGH:
-                stat, p_value = mannwhitneyu(present, missing, alternative="two-sided")
+                stat, p_value = ks_2samp(missing, present, alternative="two-sided")
                 cohen_s = self._calc_cohen_s(missing, present)
                 rho, p_value_rho = self._calc_spearman(
                     missing_feature_M=missing_M, reference_feature=col
