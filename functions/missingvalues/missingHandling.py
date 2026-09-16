@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr, pearsonr
 
 
 class MissingHandling:
@@ -77,6 +78,60 @@ class MissingHandling:
             res_df.drop(columns=["evidence_MAR"], inplace=True)
         return res_df.reset_index(drop=True)
 
+    # Tamaños del efecto
+class Effect_size_methods:
+    def _calc_cohen_s(self, missing_values, present_values):
+        mean_missing, mean_present = missing_values.mean(), present_values.mean()
+        std1_missing, std1_present = missing_values.std(ddof=1), present_values.std(
+            ddof=1
+        )
+        len_missing, len_present = len(missing_values), len(present_values)
+
+        # Desvio estandar pooled
+        pooled_std = np.sqrt(
+            ((len_missing - 1) * std1_missing**2 + (len_present - 1) * std1_present**2)
+            / (len_missing + len_present - 2)
+        )
+
+        # Cohen's d
+        cohen_d = (
+            ((mean_missing - mean_present) / pooled_std)
+            if np.isfinite(pooled_std) and pooled_std != 0
+            else 0
+        )
+        return cohen_d
+
+    # Direccion de la magnitud
+    def _calc_spearman(self, missing_feature_M, reference_feature):
+        data = self.dataFrame[[missing_feature_M, reference_feature]].dropna()
+        if len(data) < 3:
+            return 0.0, 1.0
+        rho, p_value_rho = spearmanr(
+            data[missing_feature_M],
+            data[reference_feature],
+        )
+        return rho, p_value_rho
+
+    def _calc_pearson(self, missing_feature_M, reference_feature):
+        data = self.dataFrame[[missing_feature_M, reference_feature]].dropna()
+        if len(data) < 3:
+            return 0, 1  # Not enough data to calculate Pearson correlation
+        r, p_value_r = pearsonr(data[missing_feature_M], data[reference_feature])
+        return r, p_value_r
+"""
+Interpretation of test results for missing value analysis.
+--------------------------------------------------------------------
+p_value: Significance level of the test. A low p_value indicates strong evidence against the null hypothesis.
+--------------------------------------------------------------------
+cohen_s: Measure of effect size. Indicates the standardized difference between two means.
+--------------------------------------------------------------------
+rho: Spearman's rank correlation coefficient. Measures the strength and direction of the monotonic relationship between two variables.
+--------------------------------------------------------------------
+r: Pearson correlation coefficient. Measures the strength and direction of the linear relationship between two variables.
+--------------------------------------------------------------------
+"""
+class Interpretation_result_test():
+    # Interpretación del valor P
     def _interpretate_p_value(self, p_value):
         if p_value == 0:
             return "perfect!!"
@@ -89,3 +144,47 @@ class MissingHandling:
         if p_value >= 0.05 and p_value < 0.1:
             return "low"
         return "very low"
+
+    def _interpret_spearman(self, rho):
+        direction = (
+            "Negativa" if rho < 0 else "Positiva" if rho > 0 else "Sin correlación"
+        )
+
+        if abs(rho) < 0.1:
+            return f"Insignificante ({direction})"
+        elif 0.1 <= abs(rho) < 0.3:
+            return f"Débil ({direction})"
+        elif 0.3 <= abs(rho) < 0.5:
+            return f"Moderada ({direction})"
+        elif 0.5 <= abs(rho) < 0.7:
+            return f"Fuerte ({direction})"
+        else:
+            return f"Muy fuerte ({direction})"
+
+    def _interpret_cohen_s(self, cohen_s):
+        direction = (
+            "Negativa"
+            if cohen_s < 0
+            else "Positiva" if cohen_s > 0 else "Sin diferencia"
+        )
+        if abs(cohen_s) < 0.2:
+            return f"Muy pequeño ({direction})"
+        elif 0.2 <= abs(cohen_s) < 0.5:
+            return f"Pequeño ({direction})"
+        elif 0.5 <= abs(cohen_s) < 0.8:
+            return f"Moderado ({direction})"
+        else:
+            return f"Grande ({direction})"
+
+    def _interpret_pearson(self, r):
+        direction = "Negativa" if r < 0 else "Positiva" if r > 0 else "Sin correlación"
+        if abs(r) < 0.1:
+            return f"Insignificante ({direction})"
+        elif 0.1 <= abs(r) < 0.3:
+            return f"Débil ({direction})"
+        elif 0.3 <= abs(r) < 0.5:
+            return f"Moderada ({direction})"
+        elif 0.5 <= abs(r) < 0.7:
+            return f"Fuerte ({direction})"
+        else:
+            return f"Muy fuerte ({direction})"

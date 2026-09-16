@@ -65,7 +65,9 @@ class NormalDistributionTest(MissingHandling):
         res = []
         list_cols = self._create_list_features_types(custom_features)
         for col in list_cols:
-            stat, p_value = kstest(self.dataFrame[col].dropna(), "norm")
+            data = self.dataFrame[col].dropna()
+            mu, sigma = data.mean(), data.std()
+            stat, p_value = kstest(data, "norm", args=(mu, sigma))
             res.append(
                 {
                     "name_feature": col,
@@ -85,9 +87,7 @@ class NormalDistributionTest(MissingHandling):
             stat = result.statistic
             crit_values = result.critical_values
             sig_levels = result.significance_level
-            idx_05 = list(sig_levels).index(
-                5.0
-            )  # Nivel de significancia del 5%
+            idx_05 = idx_05 = np.argmin(np.abs(np.array(sig_levels) - 5.0)) # Nivel de significancia del 5%
             evidence_non_normality = stat > crit_values[idx_05]  # Typically using the 5% significance level
             res.append(
                 {

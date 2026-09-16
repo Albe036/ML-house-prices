@@ -1,4 +1,8 @@
-from functions.missingvalues.missingHandling import MissingHandling
+from functions.missingvalues.missingHandling import (
+    MissingHandling,
+    Interpretation_result_test,
+    Effect_size_methods,
+)
 from scipy.stats import mannwhitneyu, spearmanr
 import numpy as np
 
@@ -44,7 +48,7 @@ Dirrecion (Correlacion):
 """
 
 
-class MannWhitneyU(MissingHandling):
+class MannWhitneyU(MissingHandling, Interpretation_result_test, Effect_size_methods):
     # def __init__(self, dataFrame, alpha=0.05):
     def all_features(
         self, custom_features=[], missing_feature="", desc=False, onlyTrue=True
@@ -64,8 +68,8 @@ class MannWhitneyU(MissingHandling):
             )
             if GREAT_ENOUGH:
                 stat, p_value = mannwhitneyu(present, missing, alternative="two-sided")
-                cohen_s = self._calc_cohen_s(missing, present)
-                rho, p_value_rho = self._calc_spearman(
+                cohen_s = super()._calc_cohen_s(missing, present)
+                rho, p_value_rho = super()._calc_spearman(
                     missing_feature_M=missing_M, reference_feature=col
                 )
                 values = {
@@ -85,65 +89,3 @@ class MannWhitneyU(MissingHandling):
                     values["p_value_rho"] = p_value_rho
                 res.append(values)
         return super()._config_output(res, desc=desc, onlyTrue=onlyTrue)
-
-    def _calc_cohen_s(self, missing_values, present_values):
-        mean_missing, mean_present = missing_values.mean(), present_values.mean()
-        std1_missing, std1_present = missing_values.std(ddof=1), present_values.std(
-            ddof=1
-        )
-        len_missing, len_present = len(missing_values), len(present_values)
-
-        # Desvio estandar pooled
-        pooled_std = np.sqrt(
-            ((len_missing - 1) * std1_missing**2 + (len_present - 1) * std1_present**2)
-            / (len_missing + len_present - 2)
-        )
-
-        # Cohen's d
-        cohen_d = (
-            ((mean_missing - mean_present) / pooled_std)
-            if np.isfinite(pooled_std) and pooled_std != 0
-            else 0
-        )
-        return cohen_d
-
-    def _interpret_cohen_s(self, cohen_s):
-        direction = (
-            "Negativa"
-            if cohen_s < 0
-            else "Positiva" if cohen_s > 0 else "Sin diferencia"
-        )
-        if abs(cohen_s) < 0.2:
-            return f"Muy pequeño ({direction})"
-        elif 0.2 <= abs(cohen_s) < 0.5:
-            return f"Pequeño ({direction})"
-        elif 0.5 <= abs(cohen_s) < 0.8:
-            return f"Moderado ({direction})"
-        else:
-            return f"Grande ({direction})"
-
-    def _calc_spearman(self, missing_feature_M, reference_feature):
-        data = self.dataFrame[[missing_feature_M, reference_feature]].dropna()
-        if len(data) < 3:
-            return 0.0, 1.0
-        rho, p_value_rho = spearmanr(
-            data[missing_feature_M],
-            data[reference_feature],
-        )
-        return rho, p_value_rho
-
-    def _interpret_spearman(self, rho):
-        direction = (
-            "Negativa" if rho < 0 else "Positiva" if rho > 0 else "Sin correlación"
-        )
-
-        if abs(rho) < 0.1:
-            return f"Insignificante ({direction})"
-        elif 0.1 <= abs(rho) < 0.3:
-            return f"Débil ({direction})"
-        elif 0.3 <= abs(rho) < 0.5:
-            return f"Moderada ({direction})"
-        elif 0.5 <= abs(rho) < 0.7:
-            return f"Fuerte ({direction})"
-        else:
-            return f"Muy fuerte ({direction})"
