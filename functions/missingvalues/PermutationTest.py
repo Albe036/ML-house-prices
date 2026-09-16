@@ -1,13 +1,12 @@
 from functions.missingvalues.missingHandling import MissingHandling
 import numpy as np
-from scipy.stats import ttest_ind, pearsonr
+from scipy.stats import permutation_test, spearmanr
 
-""" 
-USADA CUANDO LOS DATOS TIENEN UNA DISTRIBUCION NORMAL
+"""
 --------------------------------------------------------------------
-T-Student test:
-- Compara las medias de dos grupos independientes.
-- No requiere que los datos sean normales si los tamaños de muestra son grandes.
+Permutation test:
+- Compara las medias de dos grupos independientes mediante permutaciones.
+- No requiere que los datos sean normales.
 - Sensible a la homogeneidad de varianzas.
 --------------------------------------------------------------------
 Cohen's d test:
@@ -23,56 +22,68 @@ Dirrecion:
     d = 0       Sin diferencia
     d > 0       Positiva: El grupo 1 tiene media mayor que el grupo 2
 --------------------------------------------------------------------
-Pearson correlation:
-Mide la fuerza y dirección de la relación lineal entre dos variables.
-El valor de correlación r varía entre -1 y 1:
-    r = 1   Correlación positiva perfecta
-    r = -1  Correlación negativa perfecta
-    r = 0   Sin correlación lineal
+Spearman's rank correlation test:
+- Spearman es una medida de correlación no paramétrica que mide la relación monótona
+  entre dos variables. Es decir, si cuando una variable aumenta, la otra tiende a aumentar
+  (o disminuir) de forma consistente.
+- No requiere que los datos sean normales ni que la relación sea lineal.
+Interpretabilidad abs(rho): Mide la fuerza y dirección de la relación monótona. Va de -1 a +1.
+    0.0 <= rho < 0.1	Prácticamente nula	Correlación prácticamente irrelevante
+    0.1 <= rho < 0.3	Muy débil	Correlación prácticamente irrelevante
+    0.3 ≤ rho < 0.5	Débil	Correlación detectable pero pequeña
+    0.5 ≤ rho < 0.7	Moderada	Correlación claramente perceptible
+    rho ≥ 0.7	Fuerte	Correlación muy fuerte y relevante
+Dirrecion (Correlacion):
+    rho < 0       Negativa: La relación monótona es decreciente
+    rho = 0       Sin correlación
+    rho > 0       Positiva: La relación monótona es creciente
 --------------------------------------------------------------------
 """
 
+def differenceMean(x, y):
+    return np.mean(x) - np.mean(y)
 
-class TStudent(MissingHandling):
-    # def __init__(self, dataFrame, alpha=0.05):
+class PermutationTest(MissingHandling):
     def all_features(
         self, custom_features=[], missing_feature="", desc=False, onlyTrue=True
     ):
         res = []
         # Create feature missing_M
         missing_M = super()._define_missing_feature(missing_feature=missing_feature)
-        # Get numerical features
+        # get numerical features
         cols = super()._create_list_features_types(
             type_features="numerical", custom_features=custom_features
         )
-        # Define present y missing for feature with missing values
         for col in cols:
             missing, present, GREAT_ENOUGH = self._split_groups(
                 missing_feature=missing_feature,
                 reference_feature=col,
             )
             if GREAT_ENOUGH:
-                stat, p_value = ttest_ind(missing, present)
-                cohen_s = self._calc_cohen_s(missing, present)
-                r, p_value_r = self._calc_pearson(
-                    missing_feature_M=missing_M, reference_feature=col
+                result = permutation_test(
+                    data=(missing, present),
+                    statistic=differenceMean,
+                    permutation_type="independent",
+                    alternative="two-sided",
+                    random_state=42,
+                    n_resamples=10000,
                 )
+                stat, p_value = result.statistic, result.pvalue
+                cohen_s = self._calc_cohen_s(missing, present)
+                rho, p_value_rho = self._calc_spearman(missing_M, col)
                 values = {
                     "reference_feature": col,
                     "stat": stat,
                     "p_value": p_value,
                     "cohen_s": cohen_s,
-                    "r": r,
-                    "p_value_r": p_value_r,
+                    "rho": rho,
                     "evidence_MAR": (p_value < self.alpha),
                 }
                 if desc:
-                    values["p_value_interpretation"] = self._interpretate_p_value(
-                        p_value
-                    )
+                    """values["p_value_interpretation"] = self._interpretate_p_value(p_value)
                     values["cohen_s_interpretation"] = self._interpret_cohen_s(cohen_s)
-                    values["r_interpretation"] = self._interpret_pearson(r)
-                    values["p_value_r"] = p_value_r
+                    values["rho_interpretation"] = self._interpret_spearman(rho)
+                    values["p_value_rho"] = p_value_rho"""
                 res.append(values)
         return super()._config_output(res, desc=desc, onlyTrue=onlyTrue)
 
@@ -112,26 +123,28 @@ class TStudent(MissingHandling):
         else:
             return f"Grande ({direction})"
 
-    def _calc_pearson(self, missing_feature_M, reference_feature):
+    def _calc_spearman(self, missing_feature_M, reference_feature):
         data = self.dataFrame[[missing_feature_M, reference_feature]].dropna()
         if len(data) < 3:
-            return 0, 1  # Not enough data to calculate Pearson correlation
-        r, p_value_r = pearsonr(data[missing_feature_M], data[reference_feature])
-        return r, p_value_r
-
-    def _interpret_pearson(self, r):
-        direction = (
-            "Negativa"
-            if r < 0
-            else "Positiva" if r > 0 else "Sin correlación"
+            return 0.0, 1.0
+        rho, p_value_rho = spearmanr(
+            data[missing_feature_M],
+            data[reference_feature],
         )
-        if abs(r) < 0.1:
+        return rho, p_value_rho
+
+    def _interpret_spearman(self, rho):
+        direction = (
+            "Negativa" if rho < 0 else "Positiva" if rho > 0 else "Sin correlación"
+        )
+
+        if abs(rho) < 0.1:
             return f"Insignificante ({direction})"
-        elif 0.1 <= abs(r) < 0.3:
+        elif 0.1 <= abs(rho) < 0.3:
             return f"Débil ({direction})"
-        elif 0.3 <= abs(r) < 0.5:
+        elif 0.3 <= abs(rho) < 0.5:
             return f"Moderada ({direction})"
-        elif 0.5 <= abs(r) < 0.7:
+        elif 0.5 <= abs(rho) < 0.7:
             return f"Fuerte ({direction})"
         else:
             return f"Muy fuerte ({direction})"
