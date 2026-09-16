@@ -80,10 +80,10 @@ class PermutationTest(MissingHandling):
                     "evidence_MAR": (p_value < self.alpha),
                 }
                 if desc:
-                    """values["p_value_interpretation"] = self._interpretate_p_value(p_value)
+                    values["p_value_interpretation"] = self._interpretate_p_value(p_value)
                     values["cohen_s_interpretation"] = self._interpret_cohen_s(cohen_s)
                     values["rho_interpretation"] = self._interpret_spearman(rho)
-                    values["p_value_rho"] = p_value_rho"""
+                    values["p_value_rho"] = p_value_rho
                 res.append(values)
         return super()._config_output(res, desc=desc, onlyTrue=onlyTrue)
 
