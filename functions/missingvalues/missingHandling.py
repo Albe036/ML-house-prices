@@ -4,19 +4,17 @@ from scipy.stats import spearmanr, pearsonr
 
 
 class MissingHandling:
-    def __init__(self, dataFrame, alpha=0.05):
+
+    METHOD_SIZE_SPEARMAN = "SPEARMAN"
+    METHOD_SIZE_PEARSON = "PEARSON"
+    METHOD_DIRECTION_COHENS = "COHENS"
+
+    def __init__(self, dataFrame, alpha=0.05, maxGroup=3):
         self.dataFrame = dataFrame
         self.alpha = alpha
+        self.MIN_ABSOLUTE_GROUP_SIZE = maxGroup
 
-    def _define_missing_feature(self, missing_feature=""):
-        # Define new feature missing: True and present: False
-        missing_feature_M = f"{missing_feature}_M"
-        self.dataFrame[missing_feature_M] = self.dataFrame[missing_feature].isna()
-        return missing_feature_M
-
-    def _create_list_features_types(
-        self, custom_features=[], type_features="numerical"
-    ):
+    def _filter_types_features(self, custom_features=[], type_features="numerical"):
         custom_features = [
             f for f in custom_features if f in self.dataFrame.columns.tolist()
         ]
@@ -38,30 +36,16 @@ class MissingHandling:
             cols.remove("Id")
         return cols
 
-    def _split_groups(
-        self,
-        missing_feature="",
-        reference_feature="",
-    ):
-        if missing_feature not in self.dataFrame.columns.tolist():
-            raise ValueError(
-                f"Missing feature '{missing_feature}' not found in the DataFrame."
-            )
-
+    def _filter_missing_and_present(self, missing_feature=None, reference_feature=""):
         # split missing and present groups based on the reference feature
-        MIN_ABSOLUTE_GROUP_SIZE = 3
-        missing = self.dataFrame.loc[
-            self.dataFrame[missing_feature].isna(), reference_feature
-        ].dropna()
-        present = self.dataFrame.loc[
-            self.dataFrame[missing_feature].notna(), reference_feature
-        ].dropna()
+        missing = self.dataFrame.loc[missing_feature == 1, reference_feature].dropna()
+        present = self.dataFrame.loc[missing_feature == 0, reference_feature].dropna()
         len_missing = len(missing)
         len_present = len(present)
 
         GREAT_ENOUGH = (
-            len_missing >= MIN_ABSOLUTE_GROUP_SIZE
-            and len_present >= MIN_ABSOLUTE_GROUP_SIZE
+            len_missing >= self.MIN_ABSOLUTE_GROUP_SIZE
+            and len_present >= self.MIN_ABSOLUTE_GROUP_SIZE
         )
         if not GREAT_ENOUGH:
             return None, None, False
@@ -78,7 +62,43 @@ class MissingHandling:
             res_df.drop(columns=["evidence_MAR"], inplace=True)
         return res_df.reset_index(drop=True)
 
+
+class Methods_effect_size:
+    METHOD_SIZE_EFFECT_COHEN_S = "cohen_s"
+
+    def _calc_cohen_s(self, missing_values, present_values):
+        mean_missing, mean_present = missing_values.mean(), present_values.mean()
+        std1_missing, std1_present = missing_values.std(ddof=1), present_values.std(
+            ddof=1
+        )
+        len_missing, len_present = len(missing_values), len(present_values)
+
+        # Desvio estandar pooled
+        pooled_std = np.sqrt(
+            ((len_missing - 1) * std1_missing**2 + (len_present - 1) * std1_present**2)
+            / (len_missing + len_present - 2)
+        )
+
+        # Cohen's d
+        cohen_d = (
+            ((mean_missing - mean_present) / pooled_std)
+            if np.isfinite(pooled_std) and pooled_std != 0
+            else 0
+        )
+        return cohen_d
+
+    def calc_size_effect(self, method, missing_values, present_values):
+        if method == Methods_effect_size.METHOD_SIZE_EFFECT_COHEN_S:
+            return (
+                self._calc_cohen_s(self.missing_values, self.present_values),
+                Methods_effect_size.METHOD_SIZE_EFFECT_COHEN_S,
+            )
+        else:
+            raise ValueError(f"Unknown method: {method}")
+
     # Tamaños del efecto
+
+
 class Effect_size_methods:
     def _calc_cohen_s(self, missing_values, present_values):
         mean_missing, mean_present = missing_values.mean(), present_values.mean()
@@ -118,6 +138,8 @@ class Effect_size_methods:
             return 0, 1  # Not enough data to calculate Pearson correlation
         r, p_value_r = pearsonr(data[missing_feature_M], data[reference_feature])
         return r, p_value_r
+
+
 """
 Interpretation of test results for missing value analysis.
 --------------------------------------------------------------------
@@ -130,7 +152,9 @@ rho: Spearman's rank correlation coefficient. Measures the strength and directio
 r: Pearson correlation coefficient. Measures the strength and direction of the linear relationship between two variables.
 --------------------------------------------------------------------
 """
-class Interpretation_result_test():
+
+
+class Interpretation_result_test:
     # Interpretación del valor P
     def _interpretate_p_value(self, p_value):
         if p_value == 0:

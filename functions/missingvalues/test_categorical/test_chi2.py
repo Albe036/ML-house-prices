@@ -29,7 +29,7 @@ class Chi2Test(MissingHandling):
     ):
         res = []
         # Create feature Missing_M
-        missing_M = super().create_missing_feature(missing_feature)
+        missing_M = super()._define_missing_bool_feature(missing_feature)
         # get categorical features
         cols = super()._create_list_features_types(
             type_features="categorical", custom_features=custom_features

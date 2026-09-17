@@ -44,7 +44,9 @@ class TStudent(MissingHandling):
     ):
         res = []
         # Create feature missing_M
-        missing_M = super()._define_missing_feature(missing_feature=missing_feature)
+        missing_M = super()._define_missing_bool_feature(
+            missing_feature=missing_feature
+        )
         # Get numerical features
         cols = super()._create_list_features_types(
             type_features="numerical", custom_features=custom_features

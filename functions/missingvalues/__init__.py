@@ -1,5 +1,5 @@
 from .listMissingValues import list_missing_values
-from .missingHandling import MissingHandling
+from .missingHandling import MissingHandling, Methods_effect_size
 from .test_numeric.test_kolmogorovSmirnov import KolmogorovSmirnov
 from .test_numeric.test_mannWhitney_u import MannWhitneyU
 from .test_numeric.test_permutation import PermutationTest
