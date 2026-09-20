@@ -34,9 +34,73 @@ T-Student test:
 
 
 class NumericMissingCorrelations(MissingHandling):
+    def applyTest(
+        self,
+        testFunc=None,
+        featureMissingValues=None,
+        featuresReference=None,
+        onlyTrue=True,
+        **kwargs
+    ):
+        if featureMissingValues is None:
+            raise ValueError("featureMissingValues must be specified")
+        res = []
+        missing_bin = self.dataFrame[featureMissingValues].isna().astype(int)
+        custom_features = []
+        if featuresReference is None:
+            custom_features = self.dataFrame.columns.tolist()
+        else:
+            custom_features = [
+                f for f in featuresReference if f in self.dataFrame.columns
+            ]
+        cols = (
+            self.dataFrame[custom_features]
+            .select_dtypes(include=["number"])
+            .columns.tolist()
+        )
+        if "Id" in cols:
+            cols.remove("Id")
+        for col in cols:
+            missing = self.dataFrame.loc[missing_bin == 1, col].dropna()
+            present = self.dataFrame.loc[missing_bin == 0, col].dropna()
+            len(missing)
+            len(present)
+            GREAT_ENOUGH = (len(missing) > self.MIN_ABSOLUTE_GROUP_SIZE) and (
+                len(present) > self.MIN_ABSOLUTE_GROUP_SIZE
+            )
+            if not GREAT_ENOUGH:
+                continue
+            stat, p_value = testFunc(missing, present, **kwargs)
+            res.append(
+                {
+                    "feature": col,
+                    "stat": stat,
+                    "p_value": p_value,
+                    "evidence_MAR": (p_value < self.alpha),
+                }
+            )
+        for property in res:
+            for key, value in property.items():
+                if isinstance(value, float):
+                    property[key] = round(value, 5)
+        res = pd.DataFrame(res).sort_values(by="p_value")
+        if onlyTrue:
+            res = res[res["evidence_MAR"]]
+            res.drop(columns=["evidence_MAR"], inplace=True)
+        return res
+
     def mannWhitneyU(
         self, featureMissingValues=None, featuresReference=[], onlyTrue=True
     ):
+        return self.applyTest(
+            mannwhitneyu,
+            featureMissingValues=featureMissingValues,
+            featuresReference=featuresReference,
+            onlyTrue=onlyTrue,
+            alternative="two-sided",
+        )
+
+    """ def mannWhitneyU(self, featureMissingValues=None, featuresReference=[], onlyTrue=True):
         res = []
         missing_bin = self.dataFrame[featureMissingValues].isna().astype(int)
         cols = super()._filter_types_features(
@@ -56,7 +120,7 @@ class NumericMissingCorrelations(MissingHandling):
                         "evidence_MAR": (p_value < self.alpha),
                     }
                 )
-        return super()._config_output(res, onlyTrue=onlyTrue)
+        return super()._config_output(res, onlyTrue=onlyTrue) """
 
     def kolmogorovSmirnov(
         self, featureMissingValues=None, featuresReference=[], onlyTrue=True
@@ -90,7 +154,7 @@ class NumericMissingCorrelations(MissingHandling):
         self,
         featureMissingValues=None,
         featuresReference=[],
-        iterations=100,
+        iterations=1000,
         onlyTrue=True,
     ):
         res = []

@@ -1,6 +1,6 @@
 from .missingHandling import MissingHandling
 import pandas as pd
-from scipy.stats import chi2_contingency
+from scipy.stats import chi2_contingency, fisher_exact
 
 
 class CategoricalMissingCorrelations(MissingHandling):
@@ -37,7 +37,7 @@ class CategoricalMissingCorrelations(MissingHandling):
             )
         return super()._config_output(res, onlyTrue=onlyTrue)
 
-    def fisherExact(self):
+    def fisherExact(self, featureMissingValues=None, featuresReference=[], onlyTrue=True):
         res = []
         missing_bin = self.dataFrame[featureMissingValues].isna().astype(int)
         cols = super()._filter_types_features(
@@ -60,4 +60,4 @@ class CategoricalMissingCorrelations(MissingHandling):
                     "evidence_MAR": (p_value < self.alpha),
                 }
             )
-        return super()._config_output(res, onlyTrue=True)
+        return super()._config_output(res, onlyTrue=onlyTrue)
