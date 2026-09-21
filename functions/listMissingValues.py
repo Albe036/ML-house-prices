@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from IPython.display import display
 
-def list_missing_values(df):
+def createFeaturesMissingValuesList(df):
     df_train = df.copy()
     missing_data = df_train.isnull().sum()
     missing_data = pd.DataFrame(

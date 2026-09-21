@@ -9,42 +9,21 @@ class MissingHandling:
         self.alpha = alpha
         self.MIN_ABSOLUTE_GROUP_SIZE = maxGroup
 
-    def _filter_types_features(self, custom_features=[], type_features="numerical"):
-        custom_features = [
-            f for f in custom_features if f in self.dataFrame.columns.tolist()
-        ]
+    def _filter_features(self, custom_features=[], typesFeatures=["number"]):
+        num_cols = []
         if len(custom_features) == 0:
-            custom_features = self.dataFrame.columns.tolist()
-        if type_features == "numerical":
-            cols = (
-                self.dataFrame[custom_features]
-                .select_dtypes(include=["number"])
-                .columns.tolist()
-            )
+            num_cols = self.dataFrame.select_dtypes(include=typesFeatures).columns.tolist()
         else:
-            cols = (
-                self.dataFrame[custom_features]
-                .select_dtypes(exclude=["number"])
-                .columns.tolist()
-            )
-        if "Id" in cols:
-            cols.remove("Id")
-        return cols
+            find_cols = [f for f in custom_features if f in self.dataFrame.columns.tolist()]
+            num_cols = self.dataFrame[find_cols].select_dtypes(include=typesFeatures).columns.tolist()
+        if "Id" in num_cols:
+            num_cols.remove("Id")
+        return num_cols
 
-    def _filter_missing_and_present(self, missing_feature=None, reference_feature=""):
-        # split missing and present groups based on the reference feature
-        missing = self.dataFrame.loc[missing_feature == 1, reference_feature].dropna()
-        present = self.dataFrame.loc[missing_feature == 0, reference_feature].dropna()
-        len_missing = len(missing)
-        len_present = len(present)
-
-        GREAT_ENOUGH = (
-            len_missing >= self.MIN_ABSOLUTE_GROUP_SIZE
-            and len_present >= self.MIN_ABSOLUTE_GROUP_SIZE
-        )
-        if not GREAT_ENOUGH:
-            return None, None, False
-        return missing, present, GREAT_ENOUGH
+    def _createContingencyTable(self, featureMissingValues=None, currentFeatureReference=None):
+        con = pd.crosstab(featureMissingValues, currentFeatureReference)
+        NO_SHORTAGE_VARIANCE = con.shape[1] < 2
+        return con, NO_SHORTAGE_VARIANCE
 
     def _config_output(self, res, desc=False, onlyTrue=True):
         for property in res:

@@ -1,4 +1,4 @@
 from .numeric_missing_correlations import NumericMissingCorrelations
 from .categorical_missing_correlations import CategoricalMissingCorrelations
 from .missingHandling import MissingHandling    
-from .listMissingValues import list_missing_values
+from .listMissingValues import createFeaturesMissingValuesList
