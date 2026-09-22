@@ -1,4 +1,5 @@
+from .utilsMethods import UtilsMethods
 from .numeric_missing_correlations import NumericMissingCorrelations
 from .categorical_missing_correlations import CategoricalMissingCorrelations
 from .missingHandling import MissingHandling    
-from .listMissingValues import createFeaturesMissingValuesList
+from .test_normal_distribution import NormalDistributionTest

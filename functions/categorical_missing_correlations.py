@@ -14,8 +14,7 @@ class CategoricalMissingCorrelations(MissingHandling):
             )
         if isinstance(value, (list, tuple)):
             return tuple(
-                CategoricalMissingCorrelations._make_hashable(item)
-                for item in value
+                CategoricalMissingCorrelations._make_hashable(item) for item in value
             )
         if isinstance(value, dict):
             return tuple(
