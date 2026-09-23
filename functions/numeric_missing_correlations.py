@@ -50,8 +50,8 @@ class NumericMissingCorrelations(MissingHandling):
         for col in cols:
             missing = self.dataFrame.loc[missing_bin == 1, col].dropna()
             present = self.dataFrame.loc[missing_bin == 0, col].dropna()
-            if (len(missing) > self.MIN_ABSOLUTE_GROUP_SIZE) and (
-                len(present) > self.MIN_ABSOLUTE_GROUP_SIZE
+            if (len(missing) < self.MIN_ABSOLUTE_GROUP_SIZE) or (
+                len(present) < self.MIN_ABSOLUTE_GROUP_SIZE
             ):
                 continue
             stat, p_value = testFunc(missing, present, **kwargs)
@@ -63,7 +63,7 @@ class NumericMissingCorrelations(MissingHandling):
                     "evidence_MAR": (p_value < self.alpha),
                 }
             )
-        return super()._config_output(res, onlyTrue=onlyTrue)
+        return pd.DataFrame(res)
 
     def mannWhitneyU(
         self, featureMissingValues=None, featuresReference=[], onlyTrue=True
