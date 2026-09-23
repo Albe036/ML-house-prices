@@ -37,6 +37,7 @@ class NumericMissingCorrelations(MissingHandling):
     def applyTest(
         self,
         testFunc=None,
+        effectSizeAndDirection=None,
         featureMissingValues=None,
         featuresReference=None,
         onlyTrue=True,
@@ -55,21 +56,23 @@ class NumericMissingCorrelations(MissingHandling):
             ):
                 continue
             stat, p_value = testFunc(missing, present, **kwargs)
-            res.append(
-                {
-                    "feature": col,
-                    "stat": stat,
-                    "p_value": p_value,
-                    "evidence_MAR": (p_value < self.alpha),
-                }
-            )
+            values = {
+                "feature": col,
+                "stat": stat,
+                "p_value": p_value,
+                "evidence_MAR": (p_value < self.alpha),
+            }
+            if effectSizeAndDirection is not None:
+                values = values | effectSizeAndDirection(stat, p_value, missing=missing, present=present)
+            res.append(values)
         return pd.DataFrame(res)
 
     def mannWhitneyU(
-        self, featureMissingValues=None, featuresReference=[], onlyTrue=True
+        self, featureMissingValues=None, featuresReference=[], effectSizeAndDirection=None, onlyTrue=True
     ):
         return self.applyTest(
             mannwhitneyu,
+            effectSizeAndDirection=effectSizeAndDirection,
             featureMissingValues=featureMissingValues,
             featuresReference=featuresReference,
             onlyTrue=onlyTrue,
