@@ -61,7 +61,7 @@ class NormalDistributionTest(MissingHandling):
                     "interpretacion": "No normal" if p_value < self.alpha else "Normal",
                 }
             )
-        return self._config_output(res)
+        return pd.DataFrame(res)
 
     def shapiro_wilk_test(self, custom_features=[]):
         return self.applyTest(testFunc=shapiro, custom_features=custom_features)

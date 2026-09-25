@@ -1,8 +1,15 @@
 import numpy as np
 import pandas as pd
+
+"""
+rank biserial correlation effect size and direction calculation
+Evidence MAR:
+p_value < 0.05 (hay una evidencia significativa)
+0.1 < effect_size < 0.99 (Existe un correlacion de leve a muy fuerte)
+"""
 class EffectSizeAndDirection:
     @staticmethod
-    def rank_biseral(stat, p_value, missing=None, present=None):
+    def rank_biserial(stat, p_value, missing=None, present=None):
         if missing is None or present is None:
             return None
 
