@@ -72,7 +72,7 @@ class CategoricalMissingCorrelations(MissingHandling):
                 }
             )
 
-        return super()._config_output(res, onlyTrue=onlyTrue)
+        return pd.DataFrame(res)
 
     def chi2(self, featureMissingValues=None, featuresReference=None, onlyTrue=True):
         def chi2_test(contingencyTable):

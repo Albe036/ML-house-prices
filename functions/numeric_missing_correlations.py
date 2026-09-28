@@ -65,7 +65,10 @@ class NumericMissingCorrelations(MissingHandling):
             if effectSizeAndDirection is not None:
                 values = values | effectSizeAndDirection(stat, p_value, missing=missing, present=present)
             res.append(values)
-        return pd.DataFrame(res)
+        dfRes = pd.DataFrame(res)
+        if "index" in dfRes.columns:
+            dfRes = dfRes.drop(columns=["index"])
+        return dfRes
 
     def mannWhitneyU(
         self, featureMissingValues=None, featuresReference=[], effectSizeAndDirection=None, onlyTrue=True

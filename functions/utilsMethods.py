@@ -9,11 +9,12 @@ class UtilsMethods(MissingHandling):
         df_train = self.dataFrame.copy()
         missing_data = df_train.isnull().sum()
         missing_data = pd.DataFrame(
-            missing_data[missing_data > 0], columns=["missing counts"]
+            missing_data[missing_data > 0], columns=["missingCounts"]
         )
         missing_data["percentage(%)"] = np.round(
-            missing_data["missing counts"] / df_train.shape[0] * 100, 2
+            missing_data["missingCounts"] / df_train.shape[0] * 100, 2
         )
+        missing_data['presentCounts'] = df_train.shape[0] - missing_data['missingCounts']
         missing_data['type'] = df_train[missing_data.index].dtypes
         missing_data = missing_data.sort_values(by="percentage(%)", ascending=False)
         display(missing_data)
