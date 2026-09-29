@@ -46,7 +46,7 @@ class CategoricalMissingCorrelations(MissingHandling):
         missing_bin = self.dataFrame[featureMissingValues].isna().astype(int)
 
         cols = super()._filter_features(
-            custom_features=featuresReference,
+            custom_features=featuresReference or [],
             typesFeatures=["object", "category", "string"],
         )
 
