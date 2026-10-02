@@ -61,7 +61,7 @@ class CategoricalMissingCorrelations(MissingHandling):
             if testFuncName == "fisher_exact" and contingencyTable.shape != (2, 2):
                 continue
 
-            stat, p_value = testFunc(contingencyTable.to_numpy(), **kwargs)
+            stat, p_value = testFunc(contingencyTable, **kwargs)
 
             res.append(
                 {
