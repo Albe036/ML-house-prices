@@ -2,10 +2,14 @@ import pandas as pd
 import numpy as np
 from IPython.display import display
 from .missingHandling import MissingHandling
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
+from IPython.display import display
 
 class UtilsMethods(MissingHandling):
     
-    def createFeaturesMissingValuesList(self):
+    def ListFeaturesWithMissingValues(self):
         df_train = self.dataFrame.copy()
         missing_data = df_train.isnull().sum()
         missing_data = pd.DataFrame(
@@ -25,13 +29,6 @@ class UtilsMethods(MissingHandling):
         self.dataFrame[custom_name] = normalSerie
         return self.dataFrame[custom_name]
 
-""" 
-import seaborn as sns
-import matplotlib.pyplot as plt
-from scipy import stats
-import numpy as np
-from IPython.display import display
-
 def resumen_analyst(df_train, name_column = '', display_graphs=True):
     if display_graphs:
         plot_analyst(df_train, name_column)
@@ -42,12 +39,12 @@ def plot_analyst(df_train, name_column = ''):
     #Boxplot
     plt.figure(figsize=(30,7))
     sns.boxplot(x=df_train[name_column], color='lightblue')
-    plt.title('Boxplot of YearBuilt');
+    plt.title(f'Boxplot of {name_column}');
 
     #Histogram
     plt.figure(figsize=(10,6))
     sns.histplot(df_train[name_column], bins=50, kde=True, color='lightgreen')
-    plt.title('Distribution of YearBuilt');
+    plt.title(f'Distribution of {name_column}');
     plt.xlabel(name_column)
     plt.ylabel('Frequency');
 
@@ -55,7 +52,7 @@ def plot_analyst(df_train, name_column = ''):
     #Q-Q plot
     plt.figure(figsize=(6,6))
     stats.probplot(df_train[name_column], dist="norm", plot=plt)
-    plt.title('Q-Q Plot of YearBuilt');
+    plt.title(f'Q-Q Plot of {name_column}');
     plt.xlabel('Theoretical Quantiles')
     plt.ylabel('Sample Quantiles');
     plt.grid(True);
@@ -81,4 +78,4 @@ def cal_quartiles(df_in):
         "RIC": format_result(RIC), #Rango Intercuartílico
         "whisker_lower": format_result(W1),#Límite inferior de los bigotes
         "whisker_upper": format_result(W2),#Límite superior de los bigotes
-    } """
+    }
